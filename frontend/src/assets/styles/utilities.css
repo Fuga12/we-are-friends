@@ -1,0 +1,96 @@
+/* ============================================================
+   УТИЛИТЫ РАСКЛАДКИ
+   Небольшой набор помощников для контейнеров, сеток и секций.
+   Всё остальное оформление — в стилях самих компонентов (scoped).
+   ============================================================ */
+
+/* --- Контейнер: центрирует контент и держит боковые поля --- */
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  padding-inline: var(--container-pad);
+}
+
+/* Узкий контейнер для длинных читаемых текстов (статьи, документы) */
+.container--narrow {
+  max-width: var(--container-narrow);
+}
+
+/* --- Секция: единый вертикальный ритм между блоками страницы --- */
+.section {
+  padding-block: var(--section-gap);
+}
+.section--tight {
+  padding-block: calc(var(--section-gap) * 0.55);
+}
+
+/* Чередующийся фон секций, чтобы страница «дышала» */
+.section--muted {
+  background-color: var(--color-surface-muted);
+}
+.section--soft-teal {
+  background-color: var(--color-primary-soft);
+}
+.section--soft-amber {
+  background-color: var(--color-highlight-soft);
+}
+
+/* --- Адаптивная сетка ---
+   auto-fit + minmax = карточки сами переносятся на новую строку,
+   когда перестают помещаться. Это главный приём отзывчивой сетки
+   БЕЗ кучи медиа-запросов. Меняй --min под нужную минимальную ширину карточки. */
+.grid {
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--min, 260px), 100%), 1fr));
+}
+
+/* Стопка с одинаковым вертикальным ритмом между детьми */
+.stack > * + * {
+  margin-top: var(--space-4);
+}
+.stack-lg > * + * {
+  margin-top: var(--space-6);
+}
+
+/* Гибкий ряд, который переносится на мобилке */
+.cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+/* --- Мелкие текстовые помощники --- */
+.text-center {
+  text-align: center;
+}
+.text-muted {
+  color: var(--color-text-muted);
+}
+.lead {
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+  line-height: var(--leading-normal);
+}
+
+/* Ограничить абзац по ширине для комфортного чтения (~65 символов) */
+.measure {
+  max-width: 62ch;
+}
+.measure-center {
+  max-width: 62ch;
+  margin-inline: auto;
+}
+
+/* «Надзаголовок» — маленькая цветная подпись над заголовком секции */
+.eyebrow {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-accent-strong);
+}
