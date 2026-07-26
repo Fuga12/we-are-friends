@@ -1,0 +1,22 @@
+# зависимости
+node_modules
+# сборка
+dist
+dist-ssr
+# логи
+*.log
+npm-debug.log*
+# локальное окружение
+.env
+.env.local
+.env.*.local
+# редакторы
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

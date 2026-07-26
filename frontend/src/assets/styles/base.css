@@ -1,0 +1,141 @@
+/* ============================================================
+   БАЗОВЫЕ СТИЛИ + МЯГКИЙ СБРОС
+   Приводим браузеры к единому виду и задаём базовую типографику.
+   ============================================================ */
+
+/* Более предсказуемая блочная модель: padding и border не увеличивают
+   ширину элемента. Это то, из-за чего у новичков «ломается» вёрстка. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  /* Плавная прокрутка к якорям */
+  scroll-behavior: smooth;
+  /* Отступ сверху при переходе по якорю, чтобы не прятался под шапкой */
+  scroll-padding-top: calc(var(--header-height) + 1rem);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  font-weight: var(--weight-regular);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Картинки не вылезают за пределы контейнера и ведут себя как блоки */
+img,
+picture,
+video,
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* Заголовки: фирменный шрифт, плотный интерлиньяж */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading);
+  line-height: var(--leading-tight);
+  font-weight: var(--weight-bold);
+  color: var(--color-text);
+  text-wrap: balance; /* красивый перенос заголовков по строкам */
+}
+
+h1 {
+  font-size: var(--text-4xl);
+}
+h2 {
+  font-size: var(--text-3xl);
+}
+h3 {
+  font-size: var(--text-2xl);
+}
+h4 {
+  font-size: var(--text-xl);
+}
+
+p {
+  text-wrap: pretty; /* избегаем «висячих» коротких строк */
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+a:hover {
+  color: var(--color-primary-strong);
+}
+
+/* Кнопки и поля наследуют шрифт (по умолчанию браузер этого не делает) */
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+ul,
+ol {
+  list-style: none;
+  padding: 0;
+}
+
+/* Единое, заметное кольцо фокуса для доступности (клавиатура).
+   :focus-visible показывает его только при навигации с клавиатуры. */
+:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* Уважаем настройку пользователя «уменьшить анимации» */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Скрыто визуально, но доступно скринридерам (например, подписи к иконкам) */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
