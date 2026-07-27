@@ -68,7 +68,7 @@ const stats = [
         <div class="blob blob--teal" aria-hidden="true"></div>
         <div class="blob blob--amber" aria-hidden="true"></div>
         <div class="hero__photo">
-          <PhotoFrame ratio="4 / 5" src="/photos/340.jpg" alt="Дети в центре «Мы Друзья»" />
+          <PhotoFrame ratio="4 / 5" src="/media/photos/340.jpg" alt="Дети в центре «Мы Друзья»" />
         </div>
         <div class="hero__badge hero__badge--1" aria-hidden="true">🎨</div>
         <div class="hero__badge hero__badge--2" aria-hidden="true">⭐</div>

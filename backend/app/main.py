@@ -8,9 +8,12 @@
 Контракты ручек описаны в docs/api-contracts.md.
 """
 
+from pathlib import Path
+
 from litestar import Litestar, get
 from litestar.config.cors import CORSConfig
 from litestar.exceptions import NotFoundException
+from litestar.static_files import create_static_files_router
 
 from app.data.classes import classes
 from app.data.documents import documents
@@ -20,6 +23,10 @@ from app.data.services import special_offers
 from app.data.staff import staff
 
 Item = dict[str, object]
+
+# Папка с медиафайлами (фото центра). Путь считаем от этого файла, чтобы
+# сервер работал из любой директории: backend/media.
+MEDIA_DIR = Path(__file__).resolve().parent.parent / "media"
 
 
 def _find(items: list[Item], item_id: str, not_found: str) -> Item:
@@ -89,6 +96,9 @@ async def health() -> dict[str, object]:
 # прямом обращении, и из прод-сборки, размещённой на другом домене.
 cors_config = CORSConfig(allow_origins=["*"])
 
+# Раздача медиафайлов: GET /media/photos/090.jpg -> backend/media/photos/090.jpg
+media_router = create_static_files_router(path="/media", directories=[MEDIA_DIR])
+
 app = Litestar(
     route_handlers=[
         list_news,
@@ -101,6 +111,7 @@ app = Litestar(
         list_documents,
         list_gallery,
         health,
+        media_router,
     ],
     cors_config=cors_config,
 )

@@ -30,6 +30,15 @@ litestar --app app.main:app run --port 3001 --reload
 | GET   | `/api/staff`         | Педагоги          |
 | GET   | `/api/documents`     | Документы         |
 | GET   | `/api/gallery`       | Галерея           |
+| GET   | `/media/photos/…`    | Фото центра (файлы) |
+
+## Медиафайлы (фото)
+
+Фотографии лежат в `backend/media/photos/` и раздаются как статика по адресам
+вида `/media/photos/090.jpg`. В ответах API поля `photo`/`image` содержат именно
+такие пути. Фронт в дев-режиме проксирует `/media` на этот сервер (см.
+`frontend/vite.config.ts`), поэтому `<img src="/media/photos/…">` работает без
+CORS. В проде `/media` раздаёт бэкенд (или CDN/nginx).
 
 ## Как это связано с фронтом
 
