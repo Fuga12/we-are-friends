@@ -1,13 +1,19 @@
 <script setup lang="ts">
-import { computed, watchEffect } from 'vue'
+import { watchEffect, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { news } from '@/data/news'
+import { useAsync } from '@/composables/useAsync'
+import { getNewsPost } from '@/api'
 import PhotoFrame from '@/components/ui/PhotoFrame.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 
 const route = useRoute()
 
-const post = computed(() => news.find((n) => n.id === route.params.id))
+// Грузим одну новость по :id из адреса. Второй аргумент заставляет
+// перезагрузить данные, если перейти на другую новость без ухода со страницы.
+const { data: post, loading } = useAsync(
+  () => getNewsPost(route.params.id as string),
+  () => route.params.id,
+)
 
 // Дата в читаемом виде: «20 июля 2026»
 const formattedDate = computed(() =>
@@ -26,7 +32,11 @@ watchEffect(() => {
 </script>
 
 <template>
-  <section v-if="!post" class="section container text-center">
+  <section v-if="loading" class="section container text-center">
+    <p class="lead">Загрузка…</p>
+  </section>
+
+  <section v-else-if="!post" class="section container text-center">
     <p class="lead">Такая новость не найдена.</p>
     <BaseButton to="/news" variant="primary">Ко всем новостям</BaseButton>
   </section>

@@ -2,14 +2,18 @@
 import { computed, ref } from 'vue'
 import PageHero from '@/components/layout/PageHero.vue'
 import NewsCard from '@/components/cards/NewsCard.vue'
-import { news } from '@/data/news'
+import { useAsync } from '@/composables/useAsync'
+import { getNews } from '@/api'
+
+const { data, loading, error } = useAsync(getNews)
+const news = computed(() => data.value ?? [])
 
 // Собираем список категорий из данных (уникальные значения)
-const categories = computed(() => ['Все', ...new Set(news.map((n) => n.category))])
+const categories = computed(() => ['Все', ...new Set(news.value.map((n) => n.category))])
 const active = ref('Все')
 
 const visible = computed(() =>
-  active.value === 'Все' ? news : news.filter((n) => n.category === active.value),
+  active.value === 'Все' ? news.value : news.value.filter((n) => n.category === active.value),
 )
 </script>
 
@@ -23,22 +27,28 @@ const visible = computed(() =>
 
   <section class="section">
     <div class="container container--narrow">
-      <!-- Фильтр по категориям -->
-      <div class="chips">
-        <button
-          v-for="cat in categories"
-          :key="cat"
-          class="chip"
-          :class="{ 'chip--active': active === cat }"
-          @click="active = cat"
-        >
-          {{ cat }}
-        </button>
-      </div>
+      <p v-if="loading" class="text-muted text-center">Загрузка…</p>
+      <p v-else-if="error" class="text-muted text-center">
+        Не удалось загрузить новости. Обновите страницу.
+      </p>
+      <template v-else>
+        <!-- Фильтр по категориям -->
+        <div class="chips">
+          <button
+            v-for="cat in categories"
+            :key="cat"
+            class="chip"
+            :class="{ 'chip--active': active === cat }"
+            @click="active = cat"
+          >
+            {{ cat }}
+          </button>
+        </div>
 
-      <div class="stack-lg">
-        <NewsCard v-for="post in visible" :key="post.id" :post="post" />
-      </div>
+        <div class="stack-lg">
+          <NewsCard v-for="post in visible" :key="post.id" :post="post" />
+        </div>
+      </template>
     </div>
   </section>
 </template>

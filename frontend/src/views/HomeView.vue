@@ -8,16 +8,23 @@ import ReviewCard from '@/components/cards/ReviewCard.vue'
 import NewsCard from '@/components/cards/NewsCard.vue'
 import CtaSection from '@/components/sections/CtaSection.vue'
 
+import { computed } from 'vue'
 import { site } from '@/data/site'
-import { classes } from '@/data/classes'
-import { specialOffers } from '@/data/services'
 import { reviews } from '@/data/reviews'
-import { news } from '@/data/news'
+import { useAsync } from '@/composables/useAsync'
+import { getClasses, getServices, getNews } from '@/api'
+
+// Данные-витрину тянем с бэкенда. Пока грузятся — списки пустые,
+// секции просто дорисуются, как только придут данные.
+const { data: classesData } = useAsync(getClasses)
+const { data: servicesData } = useAsync(getServices)
+const { data: newsData } = useAsync(getNews)
 
 // На главной показываем только часть данных — «витрину»
-const featuredClasses = classes.slice(0, 3)
+const featuredClasses = computed(() => (classesData.value ?? []).slice(0, 3))
+const specialOffers = computed(() => servicesData.value ?? [])
+const latestNews = computed(() => (newsData.value ?? []).slice(0, 3))
 const featuredReviews = reviews.slice(0, 3)
-const latestNews = news.slice(0, 3)
 
 const values = [
   { emoji: '🤗', title: 'Как семья', text: 'Тёплое и уважительное отношение к каждому ребёнку.' },
