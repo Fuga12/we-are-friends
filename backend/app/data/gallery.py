@@ -6,7 +6,7 @@ gallery = [
     {"id": "2", "image": "/media/photos/090.jpg", "title": "Творческий мастер-класс"},
     {"id": "3", "image": "/media/photos/177.jpg", "title": "Тематический праздник"},
     {"id": "4", "image": "/media/photos/270.jpg", "title": "Плакат пожеланий"},
-    {"id": "5", "image": "/media/photos/200.jpg", "title": "Спортивный выезд"},
+    {"id": "5", "image": "/media/photos/210.jpg", "title": "Спортивный выезд"},
     {"id": "6", "image": "/media/photos/030.jpg", "title": "Мастер-класс по стилю"},
     {"id": "7", "image": "/media/photos/110.jpg", "title": "Опыты в БИОлаб"},
     {"id": "8", "image": "/media/photos/060.jpg", "title": "Робототехника"},

@@ -8,6 +8,7 @@
 Контракты ручек описаны в docs/api-contracts.md.
 """
 
+import os
 from pathlib import Path
 
 from litestar import Litestar, get
@@ -28,6 +29,34 @@ Item = dict[str, object]
 # сервер работал из любой директории: backend/media.
 MEDIA_DIR = Path(__file__).resolve().parent.parent / "media"
 
+# Базовый адрес, из которого собираются АБСОЛЮТНЫЕ ссылки на фото.
+# В деве это сам бэкенд; в проде задаётся переменной окружения MEDIA_BASE_URL
+# (например, адрес S3-бакета или CDN).
+MEDIA_BASE_URL = os.environ.get("MEDIA_BASE_URL", "http://localhost:3001").rstrip("/")
+
+
+def media_url(path: str) -> str:
+    """Собрать абсолютную ссылку на файл.
+
+    Заглушка просто приклеивает базовый адрес: /media/photos/090.jpg ->
+    http://localhost:3001/media/photos/090.jpg.
+
+    В проде здесь будет генерация ПОДПИСАННОЙ ссылки на объект в S3
+    (presigned URL с истечением срока) — контракт от этого не меняется:
+    в JSON так же приходит готовая абсолютная ссылка, которую фронт вставляет.
+    """
+    return f"{MEDIA_BASE_URL}{path}"
+
+
+def _absolutize(item: Item, *fields: str) -> Item:
+    """Вернуть копию элемента, где медиа-поля превращены в абсолютные ссылки."""
+    out = dict(item)
+    for field in fields:
+        value = out.get(field)
+        if isinstance(value, str) and value.startswith("/media/"):
+            out[field] = media_url(value)
+    return out
+
 
 def _find(items: list[Item], item_id: str, not_found: str) -> Item:
     """Найти элемент по id или отдать 404."""
@@ -40,23 +69,23 @@ def _find(items: list[Item], item_id: str, not_found: str) -> Item:
 # --- Новости ---------------------------------------------------------------
 @get("/api/news")
 async def list_news() -> list[Item]:
-    return news
+    return [_absolutize(n, "photo") for n in news]
 
 
 @get("/api/news/{item_id:str}")
 async def get_news(item_id: str) -> Item:
-    return _find(news, item_id, "Новость не найдена")
+    return _absolutize(_find(news, item_id, "Новость не найдена"), "photo")
 
 
 # --- Занятия ---------------------------------------------------------------
 @get("/api/classes")
 async def list_classes() -> list[Item]:
-    return classes
+    return [_absolutize(c, "photo") for c in classes]
 
 
 @get("/api/classes/{item_id:str}")
 async def get_class(item_id: str) -> Item:
-    return _find(classes, item_id, "Занятие не найдено")
+    return _absolutize(_find(classes, item_id, "Занятие не найдено"), "photo")
 
 
 # --- Услуги ----------------------------------------------------------------
@@ -83,7 +112,7 @@ async def list_documents() -> list[Item]:
 
 @get("/api/gallery")
 async def list_gallery() -> list[Item]:
-    return gallery
+    return [_absolutize(g, "image") for g in gallery]
 
 
 # --- Проверка живости: GET /api --------------------------------------------
