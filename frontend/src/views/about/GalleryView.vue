@@ -1,6 +1,11 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import PageHero from '@/components/layout/PageHero.vue'
-import { gallery } from '@/data/gallery'
+import { useAsync } from '@/composables/useAsync'
+import { getGallery } from '@/api'
+
+const { data, loading, error } = useAsync(getGallery)
+const gallery = computed(() => data.value ?? [])
 </script>
 
 <template>
@@ -13,7 +18,11 @@ import { gallery } from '@/data/gallery'
 
   <section class="section">
     <div class="container">
-      <div class="gallery-grid">
+      <p v-if="loading" class="text-muted text-center">Загрузка…</p>
+      <p v-else-if="error" class="text-muted text-center">
+        Не удалось загрузить фотографии. Обновите страницу.
+      </p>
+      <div v-else class="gallery-grid">
         <figure v-for="item in gallery" :key="item.id" class="tile">
           <img class="tile__img" :src="item.image" :alt="item.title ?? 'Фото центра'" loading="lazy" />
           <figcaption v-if="item.title" class="tile__caption">{{ item.title }}</figcaption>

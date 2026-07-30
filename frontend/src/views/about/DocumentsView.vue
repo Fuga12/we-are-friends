@@ -1,6 +1,11 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import PageHero from '@/components/layout/PageHero.vue'
-import { documents } from '@/data/documents'
+import { useAsync } from '@/composables/useAsync'
+import { getDocuments } from '@/api'
+
+const { data, loading, error } = useAsync(getDocuments)
+const documents = computed(() => data.value ?? [])
 </script>
 
 <template>
@@ -12,7 +17,11 @@ import { documents } from '@/data/documents'
 
   <section class="section">
     <div class="container container--narrow">
-      <ul class="doc-list">
+      <p v-if="loading" class="text-muted text-center">Загрузка…</p>
+      <p v-else-if="error" class="text-muted text-center">
+        Не удалось загрузить документы. Обновите страницу.
+      </p>
+      <ul v-else class="doc-list">
         <li v-for="doc in documents" :key="doc.id">
           <a
             class="doc"
@@ -35,9 +44,9 @@ import { documents } from '@/data/documents'
         </li>
       </ul>
 
-      <p class="text-muted text-center doc-note">
-        Ссылки — заглушки. Загрузи реальные файлы и подставь адреса в
-        <code>src/data/documents.ts</code>.
+      <p v-if="!loading && !error" class="text-muted text-center doc-note">
+        Ссылки — заглушки. Загрузи реальные файлы и подставь адреса на бэкенде, в
+        <code>backend/app/data/documents.py</code>.
       </p>
     </div>
   </section>

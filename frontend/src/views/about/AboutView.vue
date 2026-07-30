@@ -40,7 +40,7 @@ const principles = [
           конструирование предметов, и именно этим мы с ребятами и занимаемся.
         </p>
       </div>
-      <PhotoFrame ratio="16 / 9" src="/photos/090.jpg" alt="Мастер-класс в центре «Мы Друзья»" />
+      <PhotoFrame ratio="16 / 9" src="/media/photos/090.jpg" alt="Мастер-класс в центре «Мы Друзья»" />
     </div>
   </section>
 

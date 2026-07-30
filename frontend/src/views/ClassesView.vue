@@ -1,8 +1,13 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import PageHero from '@/components/layout/PageHero.vue'
 import ClassCard from '@/components/cards/ClassCard.vue'
 import CtaSection from '@/components/sections/CtaSection.vue'
-import { classes } from '@/data/classes'
+import { useAsync } from '@/composables/useAsync'
+import { getClasses } from '@/api'
+
+const { data, loading, error } = useAsync(getClasses)
+const classes = computed(() => data.value ?? [])
 </script>
 
 <template>
@@ -14,7 +19,11 @@ import { classes } from '@/data/classes'
 
   <section class="section">
     <div class="container">
-      <div class="grid" style="--min: 300px">
+      <p v-if="loading" class="text-muted text-center">Загрузка…</p>
+      <p v-else-if="error" class="text-muted text-center">
+        Не удалось загрузить занятия. Обновите страницу.
+      </p>
+      <div v-else class="grid" style="--min: 300px">
         <ClassCard v-for="item in classes" :key="item.id" :item="item" />
       </div>
 

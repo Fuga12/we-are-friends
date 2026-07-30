@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, watchEffect } from 'vue'
+import { watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
-import { classes } from '@/data/classes'
+import { useAsync } from '@/composables/useAsync'
+import { getClass } from '@/api'
 import { useAccent } from '@/composables/useAccent'
 import PhotoFrame from '@/components/ui/PhotoFrame.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -9,9 +10,12 @@ import { site } from '@/data/site'
 
 const route = useRoute()
 
-// Ищем занятие по :id из адреса. computed пересчитается, если перейти
-// на другое занятие без ухода со страницы.
-const item = computed(() => classes.find((c) => c.id === route.params.id))
+// Грузим занятие по :id из адреса. Второй аргумент перезагружает данные,
+// если перейти на другое занятие без ухода со страницы.
+const { data: item, loading } = useAsync(
+  () => getClass(route.params.id as string),
+  () => route.params.id,
+)
 
 // Акцентный цвет берём у занятия (с запасным значением, пока не нашли).
 const accentStyle = useAccent(() => item.value?.color ?? 'teal')
@@ -23,14 +27,19 @@ watchEffect(() => {
 </script>
 
 <template>
-  <!-- Если занятие с таким адресом не найдено -->
-  <section v-if="!item" class="section container text-center">
-    <p class="lead">Такое занятие не найдено.</p>
-    <BaseButton to="/classes" variant="primary">Ко всем занятиям</BaseButton>
-  </section>
-
-  <template v-else>
-    <article :style="accentStyle">
+  <div>
+    <!-- Обёртка = один стабильный корень страницы. App.vue заворачивает её в
+         <Transition name="page">; если менять сам корневой элемент по мере
+         загрузки данных (секция «Загрузка» → article), анимация входа
+         зависает на opacity:0 и страница выглядит пустой. -->
+    <section v-if="loading" class="section container text-center">
+      <p class="lead">Загрузка…</p>
+    </section>
+    <section v-else-if="!item" class="section container text-center">
+      <p class="lead">Такое занятие не найдено.</p>
+      <BaseButton to="/classes" variant="primary">Ко всем занятиям</BaseButton>
+    </section>
+    <article v-else :style="accentStyle">
       <!-- Шапка -->
       <header class="detail-hero">
         <div class="container">
@@ -91,7 +100,7 @@ watchEffect(() => {
         </aside>
       </div>
     </article>
-  </template>
+  </div>
 </template>
 
 <style scoped>

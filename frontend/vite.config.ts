@@ -14,5 +14,13 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
+    // Запросы на /api (данные) и /media (фото) уходят на бэкенд
+    // (Litestar, порт 3001). Благодаря этому в разработке нет проблем с CORS,
+    // а во фронте можно писать простые относительные пути вида
+    // fetch('/api/news') и <img src="/media/photos/090.jpg">.
+    proxy: {
+      '/api': 'http://localhost:3001',
+      '/media': 'http://localhost:3001',
+    },
   },
 })
