@@ -32,16 +32,19 @@ watchEffect(() => {
 </script>
 
 <template>
-  <section v-if="loading" class="section container text-center">
-    <p class="lead">Загрузка…</p>
-  </section>
-
-  <section v-else-if="!post" class="section container text-center">
-    <p class="lead">Такая новость не найдена.</p>
-    <BaseButton to="/news" variant="primary">Ко всем новостям</BaseButton>
-  </section>
-
-  <article v-else class="section">
+  <div>
+    <!-- Обёртка = один стабильный корень страницы. App.vue заворачивает её в
+         <Transition name="page">; если менять сам корневой элемент по мере
+         загрузки данных (секция «Загрузка» → article), анимация входа
+         зависает и страница выглядит пустой. -->
+    <section v-if="loading" class="section container text-center">
+      <p class="lead">Загрузка…</p>
+    </section>
+    <section v-else-if="!post" class="section container text-center">
+      <p class="lead">Такая новость не найдена.</p>
+      <BaseButton to="/news" variant="primary">Ко всем новостям</BaseButton>
+    </section>
+    <article v-else class="section">
     <div class="container container--narrow">
       <RouterLink to="/news" class="back-link">← Все новости</RouterLink>
 
@@ -68,7 +71,8 @@ watchEffect(() => {
       <BaseButton to="/news" variant="ghost">← Все новости</BaseButton>
       <BaseButton to="/contacts" variant="accent">Записаться</BaseButton>
     </div>
-  </article>
+    </article>
+  </div>
 </template>
 
 <style scoped>

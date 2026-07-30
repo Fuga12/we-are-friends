@@ -27,19 +27,19 @@ watchEffect(() => {
 </script>
 
 <template>
-  <!-- Пока грузим -->
-  <section v-if="loading" class="section container text-center">
-    <p class="lead">Загрузка…</p>
-  </section>
-
-  <!-- Если занятие с таким адресом не найдено -->
-  <section v-else-if="!item" class="section container text-center">
-    <p class="lead">Такое занятие не найдено.</p>
-    <BaseButton to="/classes" variant="primary">Ко всем занятиям</BaseButton>
-  </section>
-
-  <template v-else>
-    <article :style="accentStyle">
+  <div>
+    <!-- Обёртка = один стабильный корень страницы. App.vue заворачивает её в
+         <Transition name="page">; если менять сам корневой элемент по мере
+         загрузки данных (секция «Загрузка» → article), анимация входа
+         зависает на opacity:0 и страница выглядит пустой. -->
+    <section v-if="loading" class="section container text-center">
+      <p class="lead">Загрузка…</p>
+    </section>
+    <section v-else-if="!item" class="section container text-center">
+      <p class="lead">Такое занятие не найдено.</p>
+      <BaseButton to="/classes" variant="primary">Ко всем занятиям</BaseButton>
+    </section>
+    <article v-else :style="accentStyle">
       <!-- Шапка -->
       <header class="detail-hero">
         <div class="container">
@@ -100,7 +100,7 @@ watchEffect(() => {
         </aside>
       </div>
     </article>
-  </template>
+  </div>
 </template>
 
 <style scoped>
