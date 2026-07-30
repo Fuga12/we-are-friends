@@ -1,6 +1,4 @@
 <script setup lang="ts">
-/* Компактная «шапка» внутренней страницы: заголовок и подзаголовок
-   на мягкой цветной подложке. Эмодзи — необязательное украшение. */
 withDefaults(
   defineProps<{
     title: string
@@ -15,7 +13,7 @@ withDefaults(
 <template>
   <section class="page-hero" :class="`page-hero--${tone}`">
     <div class="container page-hero__inner">
-      <span v-if="emoji" class="page-hero__emoji" aria-hidden="true">{{ emoji }}</span>
+      <!-- <span v-if="emoji" class="page-hero__emoji" aria-hidden="true">{{ emoji }}</span> -->
       <h1 class="page-hero__title">{{ title }}</h1>
       <p v-if="subtitle" class="page-hero__subtitle">{{ subtitle }}</p>
     </div>

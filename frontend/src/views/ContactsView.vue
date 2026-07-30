@@ -55,14 +55,16 @@ const contactCards = [
           </li>
         </ul>
 
-        <!-- Заглушка карты. Позже вставь сюда iframe Яндекс.Карт. -->
-        <div class="map" aria-label="Карта проезда (заглушка)">
-          <span class="map__pin" aria-hidden="true">📍</span>
-          <p>Здесь будет карта проезда</p>
-          <small class="text-muted">
-            Вставь iframe Яндекс.Карт в <code>ContactsView.vue</code>
-          </small>
-        </div>
+        <!-- Карта проезда: виджет Яндекс.Карт.
+             Размеры не задаём атрибутами width/height — их держит CSS (.map),
+             иначе фиксированная ширина iframe растягивает колонку сетки. -->
+        <iframe
+          class="map"
+          src="https://yandex.ru/map-widget/v1/?um=constructor%3A80522a5598c600b03ad678a76cbd16d89bf72f00c63e1228c017bef153e91ff5&amp;source=constructor"
+          title="Карта проезда до центра «Мы Друзья»"
+          loading="lazy"
+          allowfullscreen
+        ></iframe>
       </div>
 
       <!-- Правая колонка: форма -->
@@ -134,6 +136,11 @@ const contactCards = [
   gap: var(--space-7);
   align-items: start;
 }
+/* min-width: 0 разрешает колонкам сжиматься. Без этого широкий вложенный
+   элемент (например iframe карты) раздвигает колонку и ломает сетку. */
+.contacts > * {
+  min-width: 0;
+}
 
 /* Контактные карточки */
 .contacts__cards {
@@ -167,25 +174,17 @@ a.contact-card__value:hover {
   color: var(--color-primary);
 }
 
-/* Карта-заглушка */
+/* Карта проезда (виджет Яндекс.Карт).
+   Ширина — по колонке, высота — пропорцией, поэтому карта одинаково хорошо
+   ложится и в две колонки на десктопе, и в одну на мобилке. */
 .map {
-  display: grid;
-  place-items: center;
-  gap: var(--space-1);
-  text-align: center;
-  min-height: 240px;
-  padding: var(--space-6);
-  background-color: var(--color-primary-soft);
-  border: 2px dashed var(--color-primary);
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  border: 0;
   border-radius: var(--radius-lg);
-}
-.map__pin {
-  font-size: 40px;
-}
-.map code {
-  padding: 1px 6px;
-  background-color: rgba(255, 255, 255, 0.6);
-  border-radius: var(--radius-sm);
+  /* подложка видна, пока виджет подгружается */
+  background-color: var(--color-surface-muted);
 }
 
 /* Форма */
