@@ -67,6 +67,17 @@ watchEffect(() => {
       <p v-for="(para, i) in post.content" :key="i">{{ para }}</p>
     </div>
 
+    <!-- Остальные фото к новости (список приходит с бэкенда) -->
+    <div v-if="post.photos?.length" class="container container--narrow post-photos">
+      <PhotoFrame
+        v-for="(src, i) in post.photos"
+        :key="src"
+        ratio="4 / 3"
+        :src="src"
+        :alt="`${post.title} — фото ${i + 1}`"
+      />
+    </div>
+
     <div class="container container--narrow post-footer">
       <BaseButton to="/news" variant="ghost">← Все новости</BaseButton>
       <BaseButton to="/contacts" variant="accent">Записаться</BaseButton>
@@ -115,6 +126,18 @@ watchEffect(() => {
 }
 .post-body p {
   color: var(--color-text);
+}
+/* Сетка фото под текстом: 2 в ряд, на мобилке — в одну колонку */
+.post-photos {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(2, 1fr);
+  margin-top: var(--space-6);
+}
+@media (max-width: 520px) {
+  .post-photos {
+    grid-template-columns: 1fr;
+  }
 }
 .post-footer {
   display: flex;

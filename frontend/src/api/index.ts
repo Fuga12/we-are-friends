@@ -26,16 +26,22 @@ async function get<T>(path: string): Promise<T> {
   return (await res.json()) as T
 }
 
+/* id везде числовой. Из адреса страницы он приходит строкой
+   (route.params.id), поэтому функции принимают и то и другое — в URL запроса
+   всё равно подставляется то же самое число. */
+type Id = number | string
+
 // Новости
 export const getNews = () => get<NewsPost[]>('/news')
-export const getNewsPost = (id: string) => get<NewsPost>(`/news/${id}`)
+export const getNewsPost = (id: Id) => get<NewsPost>(`/news/${id}`)
 
 // Занятия
 export const getClasses = () => get<ClassItem[]>('/classes')
-export const getClass = (id: string) => get<ClassItem>(`/classes/${id}`)
+export const getClass = (id: Id) => get<ClassItem>(`/classes/${id}`)
 
 // Услуги
 export const getServices = () => get<SpecialOffer[]>('/services')
+export const getService = (id: Id) => get<SpecialOffer>(`/services/${id}`)
 
 // Прочие списки
 export const getStaff = () => get<StaffMember[]>('/staff')

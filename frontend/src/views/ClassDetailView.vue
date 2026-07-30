@@ -17,8 +17,8 @@ const { data: item, loading } = useAsync(
   () => route.params.id,
 )
 
-// Акцентный цвет берём у занятия (с запасным значением, пока не нашли).
-const accentStyle = useAccent(() => item.value?.color ?? 'teal')
+// Акцентный цвет (HEX) берём у занятия; пока не загрузилось — запасной из useAccent.
+const accentStyle = useAccent(() => item.value?.color)
 
 // Заголовок вкладки браузера
 watchEffect(() => {
@@ -65,11 +65,17 @@ watchEffect(() => {
             <p v-for="(para, i) in item.fullDescription" :key="i">{{ para }}</p>
           </div>
 
-          <!-- Мини-галерея с занятий -->
-          <div class="stack">
+          <!-- Мини-галерея с занятий: список фото приходит с бэкенда -->
+          <div v-if="item.photos?.length" class="stack">
             <h2>Фото с занятий</h2>
             <div class="photo-grid">
-              <PhotoFrame v-for="n in 3" :key="n" ratio="1 / 1" emoji="📷" />
+              <PhotoFrame
+                v-for="(src, i) in item.photos"
+                :key="src"
+                ratio="1 / 1"
+                :src="src"
+                :alt="`${item.title} — фото ${i + 1}`"
+              />
             </div>
           </div>
         </div>

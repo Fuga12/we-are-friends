@@ -49,17 +49,26 @@ def media_url(path: str) -> str:
 
 
 def _absolutize(item: Item, *fields: str) -> Item:
-    """Вернуть копию элемента, где медиа-поля превращены в абсолютные ссылки."""
+    """Вернуть копию элемента, где медиа-поля превращены в абсолютные ссылки.
+
+    Поле может быть как одной ссылкой ("photo"), так и списком ссылок
+    ("photos") — обрабатываем оба случая одинаково.
+    """
     out = dict(item)
     for field in fields:
         value = out.get(field)
         if isinstance(value, str) and value.startswith("/media/"):
             out[field] = media_url(value)
+        elif isinstance(value, list):
+            out[field] = [
+                media_url(v) if isinstance(v, str) and v.startswith("/media/") else v
+                for v in value
+            ]
     return out
 
 
-def _find(items: list[Item], item_id: str, not_found: str) -> Item:
-    """Найти элемент по id или отдать 404."""
+def _find(items: list[Item], item_id: int, not_found: str) -> Item:
+    """Найти элемент по числовому id или отдать 404."""
     for item in items:
         if item["id"] == item_id:
             return item
@@ -69,40 +78,40 @@ def _find(items: list[Item], item_id: str, not_found: str) -> Item:
 # --- Новости ---------------------------------------------------------------
 @get("/api/news")
 async def list_news() -> list[Item]:
-    return [_absolutize(n, "photo") for n in news]
+    return [_absolutize(n, "photo", "photos") for n in news]
 
 
-@get("/api/news/{item_id:str}")
-async def get_news(item_id: str) -> Item:
-    return _absolutize(_find(news, item_id, "Новость не найдена"), "photo")
+@get("/api/news/{item_id:int}")
+async def get_news(item_id: int) -> Item:
+    return _absolutize(_find(news, item_id, "Новость не найдена"), "photo", "photos")
 
 
 # --- Занятия ---------------------------------------------------------------
 @get("/api/classes")
 async def list_classes() -> list[Item]:
-    return [_absolutize(c, "photo") for c in classes]
+    return [_absolutize(c, "photo", "photos") for c in classes]
 
 
-@get("/api/classes/{item_id:str}")
-async def get_class(item_id: str) -> Item:
-    return _absolutize(_find(classes, item_id, "Занятие не найдено"), "photo")
+@get("/api/classes/{item_id:int}")
+async def get_class(item_id: int) -> Item:
+    return _absolutize(_find(classes, item_id, "Занятие не найдено"), "photo", "photos")
 
 
 # --- Услуги ----------------------------------------------------------------
 @get("/api/services")
 async def list_services() -> list[Item]:
-    return special_offers
+    return [_absolutize(s, "photo", "photos") for s in special_offers]
 
 
-@get("/api/services/{item_id:str}")
-async def get_service(item_id: str) -> Item:
-    return _find(special_offers, item_id, "Услуга не найдена")
+@get("/api/services/{item_id:int}")
+async def get_service(item_id: int) -> Item:
+    return _absolutize(_find(special_offers, item_id, "Услуга не найдена"), "photo", "photos")
 
 
 # --- Списки без отдельных страниц ------------------------------------------
 @get("/api/staff")
 async def list_staff() -> list[Item]:
-    return staff
+    return [_absolutize(m, "photo") for m in staff]
 
 
 @get("/api/documents")

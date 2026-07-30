@@ -9,8 +9,15 @@ const accentStyle = useAccent(toRef(() => props.member.color))
 
 <template>
   <article class="staff-card" :style="accentStyle">
-    <!-- Заглушка-аватар с инициалами. Позже сюда можно вставить <img>. -->
-    <div class="staff-card__avatar" aria-hidden="true">{{ member.initials }}</div>
+    <!-- Аватар: фото сотрудника, а если фото нет — кружок с инициалами. -->
+    <img
+      v-if="member.photo"
+      class="staff-card__avatar staff-card__avatar--photo"
+      :src="member.photo"
+      :alt="member.name"
+      loading="lazy"
+    />
+    <div v-else class="staff-card__avatar" aria-hidden="true">{{ member.initials }}</div>
     <h3 class="staff-card__name">{{ member.name }}</h3>
     <p class="staff-card__role">{{ member.role }}</p>
     <p class="staff-card__bio">{{ member.bio }}</p>
@@ -51,6 +58,11 @@ const accentStyle = useAccent(toRef(() => props.member.color))
   background: linear-gradient(135deg, var(--c), var(--c-strong));
   border-radius: 50%;
   box-shadow: var(--shadow-md);
+}
+/* Фото в том же кружке: обрезаем по центру и обводим акцентным цветом */
+.staff-card__avatar--photo {
+  object-fit: cover;
+  border: 3px solid var(--c);
 }
 .staff-card__name {
   font-size: var(--text-lg);

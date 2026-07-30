@@ -9,17 +9,23 @@ export interface NavLink {
   children?: NavLink[]
 }
 
+/** Акцентный цвет карточки — HEX-строка с бэкенда, например '#1a6757'.
+    Светлую подложку и затемнённый оттенок фронт считает сам (см. useAccent). */
+export type HexColor = string
+
 export interface ClassItem {
-  id: string
+  id: number
   title: string
   ageRange: string
   description: string
   schedule: string
   price: string
   emoji: string
-  /** Ссылка на фото занятия. Пока не задано — показывается заглушка. */
+  /** Главное фото занятия. Пока не задано — показывается заглушка. */
   photo?: string
-  color: 'teal' | 'orange' | 'amber' | 'red'
+  /** Дополнительные фото с занятий — мини-галерея на странице занятия. */
+  photos?: string[]
+  color: HexColor
   /** Развёрнутое описание для отдельной страницы занятия (абзацы). */
   fullDescription?: string[]
   /** Что получит ребёнок — список на странице занятия. */
@@ -27,17 +33,19 @@ export interface ClassItem {
 }
 
 export interface StaffMember {
-  id: string
+  id: number
   name: string
   role: string
   bio: string
-  /** Инициалы для заглушки-аватара, пока нет фото */
+  /** Инициалы для заглушки-аватара, если фото нет */
   initials: string
-  color: 'teal' | 'orange' | 'amber' | 'red'
+  color: HexColor
+  /** Фото сотрудника — показывается в кружке аватара вместо инициалов. */
+  photo?: string
 }
 
 export interface Review {
-  id: string
+  id: number
   author: string
   role: string
   text: string
@@ -45,7 +53,7 @@ export interface Review {
 }
 
 export interface NewsPost {
-  id: string
+  id: number
   title: string
   date: string // ISO-формат: YYYY-MM-DD
   category: string
@@ -53,12 +61,14 @@ export interface NewsPost {
   emoji: string
   /** Обложка новости. Не задано — показывается заглушка. */
   photo?: string
+  /** Остальные фото к новости — галерея под текстом. */
+  photos?: string[]
   /** Полный текст новости (абзацы) для отдельной страницы. */
   content?: string[]
 }
 
 export interface DocumentItem {
-  id: string
+  id: number
   title: string
   description: string
   fileType: string // например 'PDF'
@@ -67,15 +77,15 @@ export interface DocumentItem {
 }
 
 export interface GalleryItem {
-  id: string
-  /** Путь к фото в public/photos */
+  id: number
+  /** Абсолютная ссылка на фото с бэкенда */
   image: string
   /** Подпись (необязательно) */
   title?: string
 }
 
 export interface SpecialOffer {
-  id: string
+  id: number
   title: string
   tagline: string
   description: string
@@ -83,5 +93,9 @@ export interface SpecialOffer {
   price: string
   emoji: string
   to: string
-  color: 'teal' | 'orange' | 'amber' | 'red'
+  color: HexColor
+  /** Главное фото услуги */
+  photo?: string
+  /** Галерея к услуге */
+  photos?: string[]
 }

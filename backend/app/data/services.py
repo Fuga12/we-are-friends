@@ -1,7 +1,16 @@
-"""Специальные услуги — крупные предложения с отдельными страницами."""
+"""Специальные услуги — крупные предложения с отдельными страницами.
+
+id — целые числа (int), color — HEX (см. app/data/colors.py).
+photo — главное фото услуги, photos — галерея к услуге.
+`to` — внутренний путь страницы во фронте, он остаётся слагом: страницы услуг
+свёрстаны отдельными компонентами и по числовому id не находятся.
+"""
+
+from app.data.colors import AMBER, ORANGE, TEAL
+
 special_offers = [
     {
-        "id": "birthday",
+        "id": 1,
         "title": "День рождения в центре",
         "tagline": "Праздник с мастер-классом",
         "description": (
@@ -17,10 +26,16 @@ special_offers = [
         "price": "8 000 ₽",
         "emoji": "🎉",
         "to": "/special/birthday",
-        "color": "orange",
+        "color": ORANGE,
+        "photo": "/media/photos/270.jpg",
+        "photos": [
+            "/media/photos/240.jpg",
+            "/media/photos/250.jpg",
+            "/media/photos/280.jpg",
+        ],
     },
     {
-        "id": "masterclasses",
+        "id": 2,
         "title": "Мастер-классы",
         "tagline": "Столярка, кулинария и творчество",
         "description": (
@@ -36,10 +51,16 @@ special_offers = [
         "price": "по запросу",
         "emoji": "🎭",
         "to": "/special/masterclasses",
-        "color": "teal",
+        "color": TEAL,
+        "photo": "/media/photos/090.jpg",
+        "photos": [
+            "/media/photos/130.jpg",
+            "/media/photos/190.jpg",
+            "/media/photos/330.jpg",
+        ],
     },
     {
-        "id": "summer",
+        "id": 3,
         "title": "Летние программы",
         "tagline": "«Школа магии», «Деффчонки», «Майнкрафт»",
         "description": (
@@ -55,6 +76,12 @@ special_offers = [
         "price": "по запросу",
         "emoji": "☀️",
         "to": "/special/summer",
-        "color": "amber",
+        "color": AMBER,
+        "photo": "/media/photos/177.jpg",
+        "photos": [
+            "/media/photos/210.jpg",
+            "/media/photos/220.jpg",
+            "/media/photos/320.jpg",
+        ],
     },
 ]

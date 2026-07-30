@@ -1,27 +1,28 @@
 import { computed, type MaybeRefOrGetter, toValue } from 'vue'
 
 /*
-  Многие карточки бывают четырёх фирменных цветов (teal/orange/amber/red).
-  Вместо того чтобы плодить CSS-классы, отдаём объект со стилями,
-  где заданы CSS-переменные --c (основной) и --c-soft (подложка).
-  В стилях компонента используем var(--c) / var(--c-soft).
+  Акцентный цвет карточки приходит с бэкенда как HEX-строка ('#1a6757').
+
+  Компоненту нужны три оттенка, поэтому здесь мы отдаём объект с CSS-переменными:
+    --c        — сам цвет как есть;
+    --c-soft   — светлая подложка (цвет, разбавленный фоном страницы);
+    --c-strong — затемнённый оттенок для текста и hover.
+
+  Оттенки считает сам браузер через color-mix() — так бэкенду достаточно
+  прислать один HEX, и работает любой цвет, а не только четыре фирменных.
+  В стилях компонента используем var(--c) / var(--c-soft) / var(--c-strong).
 */
-export type AccentColor = 'teal' | 'orange' | 'amber' | 'red'
+const FALLBACK = 'var(--brand-teal)'
 
-const map: Record<AccentColor, { c: string; soft: string; strong: string }> = {
-  teal: { c: 'var(--brand-teal)', soft: 'var(--brand-teal-soft)', strong: 'var(--brand-teal-strong)' },
-  orange: { c: 'var(--brand-orange)', soft: 'var(--brand-orange-soft)', strong: 'var(--brand-orange-strong)' },
-  amber: { c: 'var(--brand-amber)', soft: 'var(--brand-amber-soft)', strong: 'var(--brand-red-strong)' },
-  red: { c: 'var(--brand-red)', soft: 'var(--brand-red-soft)', strong: 'var(--brand-red-strong)' },
-}
-
-export function useAccent(color: MaybeRefOrGetter<AccentColor>) {
+export function useAccent(color: MaybeRefOrGetter<string | undefined>) {
   return computed(() => {
-    const value = map[toValue(color)] ?? map.teal
+    const c = toValue(color) || FALLBACK
     return {
-      '--c': value.c,
-      '--c-soft': value.soft,
-      '--c-strong': value.strong,
+      '--c': c,
+      // 12% цвета на фоне страницы — та же лёгкая подложка, что была у brand-*-soft
+      '--c-soft': `color-mix(in srgb, ${c} 12%, var(--color-bg))`,
+      // ~18% чёрного — примерно такой же шаг, как между brand-teal и brand-teal-strong
+      '--c-strong': `color-mix(in srgb, ${c} 82%, #000)`,
     } as Record<string, string>
   })
 }
