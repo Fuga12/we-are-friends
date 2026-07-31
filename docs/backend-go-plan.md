@@ -1,7 +1,7 @@
 # План настоящего бэкенда: Go + PostgreSQL + MinIO
 
 Документ описывает, чем и как заменить текущую заглушку на Litestar
-(`backend/`, данные в `app/data/*.py`). Контракты ручек уже зафиксированы в
+(`backend-stub/`, данные в `app/data/*.py`). Контракты ручек уже зафиксированы в
 [api-contracts.md](api-contracts.md) — **новый бэкенд обязан отдавать тот же
 JSON**, тогда фронтенд не придётся переделывать вообще.
 
@@ -247,7 +247,7 @@ create table reviews (
 На каждый запрос API генерирует *presigned URL* — временную подписанную ссылку.
 
 Это ровно то, что уже описано в контракте и заложено в заглушке
-(функция `media_url()` в `backend/app/main.py`), так что фронт снова не меняется.
+(функция `media_url()` в `backend-stub/app/main.py`), так что фронт снова не меняется.
 
 ```go
 // Ссылка живёт 1 час. Генерация — локальная подпись HMAC,
@@ -395,29 +395,29 @@ DTO. `store` возвращает ключи объектов, а не URL — �
 
 ### Этап 0. Каркас и инфраструктура
 
-- [ ] `docker-compose.yml`: `postgres:17`, `minio/minio` (порты 9000/9001 —
+- [x] `docker-compose.yml`: `postgres:17`, `minio/minio` (порты 9000/9001 —
       API и веб-консоль), тома для данных
-- [ ] `.gitignore` в `backend-go/` с `.env` в первой строке
-- [ ] `.env.example` (только имена, без значений): `DATABASE_URL`,
+- [x] `.gitignore` в `backend-go/` с `.env` в первой строке
+- [x] `.env.example` (только имена, без значений): `DATABASE_URL`,
       `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_BUCKET`,
       `MEDIA_PUBLIC_BASE_URL`, `PORT`, `CORS_ORIGINS`, `ADMIN_USER`,
       `ADMIN_PASSWORD`
-- [ ] Конфиг падает на старте с понятной ошибкой, если обязательной переменной
+- [x] Конфиг падает на старте с понятной ошибкой, если обязательной переменной
       нет. Пустой `ADMIN_PASSWORD` — это открытая админка, такое лучше поймать
       сразу, а не в проде
-- [ ] `go mod init`, подключить chi, pgx, minio-go, goose
-- [ ] `main.go`: чтение конфига, пул pgx, клиент MinIO, chi-роутер с
+- [x] `go mod init`, подключить chi, pgx, minio-go, goose
+- [x] `main.go`: чтение конфига, пул pgx, клиент MinIO, chi-роутер с
       middleware (`RequestID`, `RealIP`, `Recoverer`, `Timeout` из
       `chi/middleware`, CORS из отдельного пакета `go-chi/cors`, свой
       middleware логирования на slog), ручка `/api/healthz`,
       graceful shutdown по `SIGTERM`
-- [ ] `Makefile`: `make up`, `make migrate`, `make sqlc`, `make run`, `make test`
+- [x] `Makefile`: `make up`, `make migrate`, `make sqlc`, `make run`, `make test`
 
 **Готово, когда:** `curl localhost:8080/api/healthz` отвечает `{"ok":true}`.
 
 ### Этап 1. Схема и миграции
 
-- [ ] `migrations/0001_init.sql` — таблицы из раздела 3
+- [x] `migrations/0001_init.sql` — таблицы из раздела 3
 - [ ] `sqlc.yaml` + первые запросы в `internal/store/queries/`
 - [ ] `make sqlc` генерирует код, он компилируется
 
@@ -430,7 +430,7 @@ DTO. `store` возвращает ключи объектов, а не URL — �
 
 - [ ] Снять дампы с работающей заглушки:
       `curl -s localhost:3001/api/classes > seed/classes.json` (и остальные)
-- [ ] `seed/main.go`: залить `backend/media/photos/*.jpg` в MinIO (заодно
+- [ ] `seed/main.go`: залить `backend-stub/media/photos/*.jpg` в MinIO (заодно
       посчитать `width`/`height`/`size`), затем вставить записи, подставляя
       `media.id` вместо путей
 - [ ] Сверить: количество записей и набор фото совпадают с заглушкой
@@ -445,13 +445,13 @@ diff <(curl -s localhost:3001/api/classes | jq -S 'map(del(.photo,.photos))') \
 
 ### Этап 3. Публичные ручки
 
-- [ ] Все ручки из раздела 5, включая 404 на несуществующий id и 400 на
+- [x] Все публичные ручки из раздела 5, включая 404 на несуществующий id и 400 на
       нечисловой
 - [ ] `dto.go` с json-тегами в camelCase; необязательные поля — `omitempty`,
       чтобы отсутствующее фото не приезжало как `"photo": ""`
-- [ ] Единый формат ошибки: `{"error":{"code":"not_found","message":"..."}}`
+- [x] Единый формат ошибки: `{"error":{"code":"not_found","message":"..."}}`
 - [ ] Тесты хендлеров на `httptest` + `golden`-файлы с ожидаемым JSON
-- [ ] Переключить прокси Vite (`frontend/vite.config.ts`) на порт Go-бэкенда
+- [x] Переключить прокси Vite (`frontend/vite.config.ts`) на порт Go-бэкенда
 
 **Готово, когда:** сайт целиком работает на Go-бэкенде, во фронте не изменено
 ни строки, кроме порта в конфиге Vite.
@@ -478,7 +478,7 @@ diff <(curl -s localhost:3001/api/classes | jq -S 'map(del(.photo,.photos))') \
 - [ ] nginx/Caddy впереди: HTTPS, отдача статики фронта, проксирование `/api`
 - [ ] Бэкапы: `pg_dump` по cron + `mc mirror` бакета
 - [ ] Логи в JSON (`slog.NewJSONHandler`), метрики Prometheus — по желанию
-- [ ] Удалить `backend/` (Python-заглушку) и обновить README
+- [ ] Удалить `backend-stub/` (Python-заглушку) и обновить README
 
 ---
 

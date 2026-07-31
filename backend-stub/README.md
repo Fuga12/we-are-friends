@@ -8,7 +8,7 @@
 ## Установка и запуск
 
 ```bash
-cd backend
+cd backend-stub
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -43,7 +43,7 @@ litestar --app app.main:app run --port 3001 --reload
 
 ## Медиафайлы (фото)
 
-Фотографии лежат в `backend/media/photos/` и раздаются как статика по адресам
+Фотографии лежат в `backend-stub/media/photos/` и раздаются как статика по адресам
 вида `/media/photos/090.jpg`.
 
 В ответах API поля `photo`/`photos`/`image` содержат **абсолютные** ссылки —

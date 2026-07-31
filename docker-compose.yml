@@ -1,0 +1,95 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: we_are_friends
+      POSTGRES_USER: we_are_friends
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-we_are_friends}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U we_are_friends -d we_are_friends"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio-data:/data
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_started
+    entrypoint: >
+      /bin/sh -c "until mc alias set local http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}; do sleep 2; done &&
+      mc mb --ignore-existing local/media && mc anonymous set download local/media"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+
+  stub:
+    build: ./backend-stub
+    profiles: [seed]
+
+  seed:
+    build:
+      context: .
+      dockerfile: backend-go/Seed.Dockerfile
+    profiles: [seed]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+      stub:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgres://we_are_friends:${POSTGRES_PASSWORD:-we_are_friends}@postgres:5432/we_are_friends?sslmode=disable
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_BUCKET: media
+      MEDIA_PUBLIC_BASE_URL: /media
+      PORT: "8080"
+      CORS_ORIGINS: http://localhost
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
+      STUB_URL: http://stub:3001
+      STUB_MEDIA_DIR: /app/media
+
+  api:
+    build: ./backend-go
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgres://we_are_friends:${POSTGRES_PASSWORD:-we_are_friends}@postgres:5432/we_are_friends?sslmode=disable
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      MINIO_BUCKET: media
+      MEDIA_PUBLIC_BASE_URL: /media
+      PORT: "8080"
+      CORS_ORIGINS: http://localhost
+      ADMIN_USER: ${ADMIN_USER:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
+
+  web:
+    build: ./frontend
+    depends_on:
+      - api
+    ports:
+      - "${WEB_PORT:-8088}:80"
+
+volumes:
+  postgres-data:
+  minio-data:

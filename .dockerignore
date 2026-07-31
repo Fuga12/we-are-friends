@@ -1,0 +1,11 @@
+.git
+.claude
+frontend/node_modules
+frontend/dist
+photo
+tmp
+cropped-image_full.png
+backend-stub/.venv
+backend-go/.env
+backend-go/bin
+**/__pycache__

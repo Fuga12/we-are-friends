@@ -27,7 +27,7 @@ from app.data.staff import staff
 Item = dict[str, object]
 
 # Папка с медиафайлами (фото центра). Путь считаем от этого файла, чтобы
-# сервер работал из любой директории: backend/media.
+# сервер работал из любой директории: backend-stub/media.
 MEDIA_DIR = Path(__file__).resolve().parent.parent / "media"
 
 # Базовый адрес, из которого собираются АБСОЛЮТНЫЕ ссылки на фото.
@@ -141,7 +141,7 @@ async def health() -> dict[str, object]:
 # прямом обращении, и из прод-сборки, размещённой на другом домене.
 cors_config = CORSConfig(allow_origins=["*"])
 
-# Раздача медиафайлов: GET /media/photos/090.jpg -> backend/media/photos/090.jpg
+# Раздача медиафайлов: GET /media/photos/090.jpg -> backend-stub/media/photos/090.jpg
 media_router = create_static_files_router(path="/media", directories=[MEDIA_DIR])
 
 app = Litestar(

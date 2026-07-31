@@ -25,6 +25,7 @@ import BirthdayView from '@/views/special/BirthdayView.vue'
 import MasterclassesView from '@/views/special/MasterclassesView.vue'
 import SummerView from '@/views/special/SummerView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
+import AdminView from '@/views/admin/AdminView.vue'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -33,6 +34,7 @@ const routes: RouteRecordRaw[] = [
     component: HomeView,
     meta: { title: 'Мы друзья — детский центр в Петрозаводске' },
   },
+  { path: '/admin', name: 'admin', component: AdminView, meta: { title: 'Админка', admin: true } },
 
   // Раздел «О центре» с вложенными подстраницами
   {

@@ -4,13 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
-    "preview": "vite preview",
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
+    "@primeuix/themes": "^3.0.0",
     "lucide-vue-next": "^0.536.0",
+    "primevue": "^5.0.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },

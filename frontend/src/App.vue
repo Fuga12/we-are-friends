@@ -4,7 +4,7 @@ import SiteFooter from '@/components/layout/SiteFooter.vue'
 </script>
 
 <template>
-  <SiteHeader />
+  <SiteHeader v-if="!$route.meta.admin" />
 
   <main id="main">
     <!-- Плавное перекрёстное затухание при смене страницы.
@@ -18,7 +18,7 @@ import SiteFooter from '@/components/layout/SiteFooter.vue'
     </RouterView>
   </main>
 
-  <SiteFooter />
+  <SiteFooter v-if="!$route.meta.admin" />
 </template>
 
 <style scoped>
