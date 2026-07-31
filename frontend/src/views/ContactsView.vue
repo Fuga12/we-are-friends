@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import { Clock3, House, MapPin, MessageCircle, Phone } from 'lucide-vue-next'
 import PageHero from '@/components/layout/PageHero.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import { site } from '@/data/site'
@@ -24,12 +25,12 @@ function submit() {
 }
 
 const contactCards = [
-  { emoji: '📍', label: 'Основная площадка', value: site.address },
-  { emoji: '🏠', label: 'Филиал (Древлянка)', value: `${site.address2} — ${site.address2Note}` },
-  { emoji: '📞', label: 'Телефон', value: site.phone, href: site.phoneHref },
-  { emoji: '📱', label: 'Ещё телефон', value: site.phone2, href: site.phone2Href },
-  { emoji: '💬', label: 'ВКонтакте', value: 'vk.ru/ddc_ptz', href: site.vk },
-  { emoji: '🕒', label: 'Часы работы', value: site.workingHours },
+  { icon: MapPin, color: 'var(--brand-red)', label: 'Основная площадка', value: site.address },
+  { icon: House, color: 'var(--brand-teal)', label: 'Филиал (Древлянка)', value: `${site.address2} — ${site.address2Note}` },
+  { icon: Phone, color: 'var(--brand-amber)', label: 'Телефон 1', value: site.phone, href: site.phoneHref },
+  { icon: Phone, color: 'var(--brand-amber)', label: 'Телефон 2', value: site.phone2, href: site.phone2Href },
+  { icon: MessageCircle, color: 'var(--brand-blue)', label: 'ВКонтакте', value: 'vk.ru/ddc_ptz', href: site.vk },
+  { icon: Clock3, color: 'var(--brand-orange)', label: 'Часы работы', value: site.workingHours },
 ]
 </script>
 
@@ -46,7 +47,14 @@ const contactCards = [
       <div class="contacts__info stack-lg">
         <ul class="contacts__cards">
           <li v-for="c in contactCards" :key="c.label" class="contact-card">
-            <span class="contact-card__emoji" aria-hidden="true">{{ c.emoji }}</span>
+            <component
+              :is="c.icon"
+              class="contact-card__icon"
+              :style="{ color: c.color }"
+              :size="26"
+              stroke-width="1.8"
+              aria-hidden="true"
+            />
             <div>
               <span class="contact-card__label">{{ c.label }}</span>
               <a v-if="c.href" :href="c.href" class="contact-card__value">{{ c.value }}</a>
@@ -58,13 +66,14 @@ const contactCards = [
         <!-- Карта проезда: виджет Яндекс.Карт.
              Размеры не задаём атрибутами width/height — их держит CSS (.map),
              иначе фиксированная ширина iframe растягивает колонку сетки. -->
-        <iframe
-          class="map"
-          src="https://yandex.ru/map-widget/v1/?um=constructor%3A80522a5598c600b03ad678a76cbd16d89bf72f00c63e1228c017bef153e91ff5&amp;source=constructor"
-          title="Карта проезда до центра «Мы Друзья»"
-          loading="lazy"
-          allowfullscreen
-        ></iframe>
+        <div class="map">
+          <iframe
+            src="https://yandex.ru/map-widget/v1/?um=constructor%3A80522a5598c600b03ad678a76cbd16d89bf72f00c63e1228c017bef153e91ff5&amp;source=constructor"
+            title="Карта проезда до центра «Мы Друзья»"
+            loading="lazy"
+            allowfullscreen
+          ></iframe>
+        </div>
       </div>
 
       <!-- Правая колонка: форма -->
@@ -155,8 +164,8 @@ const contactCards = [
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
 }
-.contact-card__emoji {
-  font-size: 26px;
+.contact-card__icon {
+  flex: none;
 }
 .contact-card__label {
   display: block;
@@ -178,13 +187,23 @@ a.contact-card__value:hover {
    Ширина — по колонке, высота — пропорцией, поэтому карта одинаково хорошо
    ложится и в две колонки на десктопе, и в одну на мобилке. */
 .map {
-  display: block;
   width: 100%;
   aspect-ratio: 3 / 2;
-  border: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
   /* подложка видна, пока виджет подгружается */
   background-color: var(--color-surface-muted);
+}
+.map iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  /* Firefox не всегда обрезает поверхность iframe через overflow родителя.
+     Клиппинг на самом iframe убирает торчащие углы карты. */
+  clip-path: inset(0 round var(--radius-lg));
 }
 
 /* Форма */

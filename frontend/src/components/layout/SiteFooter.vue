@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { mainNav } from '@/data/navigation'
 import { site } from '@/data/site'
+import { Clock3, MapPin, Phone } from 'lucide-vue-next'
 
 const year = new Date().getFullYear()
 </script>
@@ -32,19 +33,21 @@ const year = new Date().getFullYear()
         <h3 class="footer__heading">Контакты</h3>
         <ul class="footer__contacts">
           <li>
-            <span aria-hidden="true">📍</span>
-            <span>{{ site.address }}</span>
+            <MapPin :size="18" stroke-width="1.8" aria-hidden="true" />
+            <a :href="site.yandexMaps" target="_blank" rel="noopener noreferrer">
+              {{ site.address }}
+            </a>
           </li>
           <li>
-            <span aria-hidden="true">📞</span>
+            <Phone :size="18" stroke-width="1.8" aria-hidden="true" />
             <a :href="site.phoneHref">{{ site.phone }}</a>
           </li>
           <li>
-            <span aria-hidden="true">📱</span>
+            <Phone :size="18" stroke-width="1.8" aria-hidden="true" />
             <a :href="site.phone2Href">{{ site.phone2 }}</a>
           </li>
           <li>
-            <span aria-hidden="true">🕒</span>
+            <Clock3 :size="18" stroke-width="1.8" aria-hidden="true" />
             <span>{{ site.workingHours }}</span>
           </li>
         </ul>
@@ -119,6 +122,10 @@ const year = new Date().getFullYear()
   gap: var(--space-3);
   color: rgba(255, 255, 255, 0.85);
   font-size: var(--text-sm);
+}
+.footer__contacts svg {
+  flex: none;
+  color: var(--brand-amber);
 }
 .footer__bottom {
   border-top: 1px solid rgba(255, 255, 255, 0.15);

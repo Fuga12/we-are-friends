@@ -9,6 +9,12 @@ export interface NavLink {
   children?: NavLink[]
 }
 
+/** Контент главной страницы. */
+export interface HomeContent {
+  /** Фото, которые по очереди показываются в главном баннере. */
+  heroPhotos: string[]
+}
+
 /** Акцентный цвет карточки — HEX-строка с бэкенда, например '#1a6757'.
     Светлую подложку и затемнённый оттенок фронт считает сам (см. useAccent). */
 export type HexColor = string
@@ -80,8 +86,6 @@ export interface GalleryItem {
   id: number
   /** Абсолютная ссылка на фото с бэкенда */
   image: string
-  /** Подпись (необязательно) */
-  title?: string
 }
 
 export interface SpecialOffer {

@@ -18,6 +18,7 @@ export const site = {
   // Соцсети и запись
   vk: 'https://vk.ru/ddc_ptz',
   vkMarket: 'https://vk.ru/market-140504196',
+  yandexMaps: 'https://yandex.ru/maps/-/CTv5QYlE',
   // Координаты для карты (пр. Александра Невского, 60, Петрозаводск)
   geo: { lat: 61.7679, lng: 34.3487 },
 } as const

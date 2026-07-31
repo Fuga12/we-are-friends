@@ -1,7 +1,22 @@
 <script setup lang="ts">
 /* Горизонтальное меню для десктопа. У пунктов с children появляется
    выпадающий список по наведению И по фокусу с клавиатуры (доступность). */
+import { ref } from 'vue'
+import { ChevronDown } from 'lucide-vue-next'
 import { mainNav } from '@/data/navigation'
+
+const openDropdown = ref<string | null>(null)
+
+function closeDropdown() {
+  openDropdown.value = null
+}
+
+function closeOnFocusOut(event: FocusEvent) {
+  const item = event.currentTarget as HTMLElement
+  requestAnimationFrame(() => {
+    if (!item.contains(document.activeElement)) closeDropdown()
+  })
+}
 </script>
 
 <template>
@@ -11,17 +26,21 @@ import { mainNav } from '@/data/navigation'
         v-for="link in mainNav"
         :key="link.to"
         class="desktop-nav__item"
-        :class="{ 'has-children': link.children }"
+        :class="{ 'has-children': link.children, 'has-children--open': openDropdown === link.to }"
+        @mouseenter="link.children && (openDropdown = link.to)"
+        @mouseleave="closeDropdown"
+        @focusin="link.children && (openDropdown = link.to)"
+        @focusout="closeOnFocusOut"
       >
-        <RouterLink :to="link.to" class="desktop-nav__link">
+        <RouterLink :to="link.to" class="desktop-nav__link" @click="closeDropdown">
           {{ link.label }}
-          <span v-if="link.children" class="desktop-nav__caret" aria-hidden="true">▾</span>
+          <ChevronDown v-if="link.children" class="desktop-nav__caret" :size="15" aria-hidden="true" />
         </RouterLink>
 
         <!-- Выпадающее подменю -->
         <ul v-if="link.children" class="desktop-nav__dropdown">
           <li v-for="child in link.children" :key="child.to">
-            <RouterLink :to="child.to" class="desktop-nav__dropdown-link">
+            <RouterLink :to="child.to" class="desktop-nav__dropdown-link" @click="closeDropdown">
               {{ child.label }}
             </RouterLink>
           </li>
@@ -62,7 +81,8 @@ import { mainNav } from '@/data/navigation'
   color: var(--color-primary-strong);
 }
 .desktop-nav__caret {
-  font-size: 10px;
+  flex: none;
+  color: var(--color-primary);
   transition: transform var(--transition);
 }
 
@@ -88,13 +108,12 @@ import { mainNav } from '@/data/navigation'
   z-index: var(--z-header);
 }
 /* Показать при наведении на пункт или при фокусе внутри него */
-.has-children:hover .desktop-nav__dropdown,
-.has-children:focus-within .desktop-nav__dropdown {
+.has-children--open .desktop-nav__dropdown {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
 }
-.has-children:hover .desktop-nav__caret {
+.has-children--open .desktop-nav__caret {
   transform: rotate(180deg);
 }
 .desktop-nav__dropdown-link {

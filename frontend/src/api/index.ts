@@ -9,6 +9,7 @@ import type {
   ClassItem,
   DocumentItem,
   GalleryItem,
+  HomeContent,
   NewsPost,
   SpecialOffer,
   StaffMember,
@@ -30,6 +31,9 @@ async function get<T>(path: string): Promise<T> {
    (route.params.id), поэтому функции принимают и то и другое — в URL запроса
    всё равно подставляется то же самое число. */
 type Id = number | string
+
+// Главная страница
+export const getHome = () => get<HomeContent>('/home')
 
 // Новости
 export const getNews = () => get<NewsPost[]>('/news')

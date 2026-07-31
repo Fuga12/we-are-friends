@@ -8,15 +8,16 @@ import ReviewCard from '@/components/cards/ReviewCard.vue'
 import NewsCard from '@/components/cards/NewsCard.vue'
 import CtaSection from '@/components/sections/CtaSection.vue'
 
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { site } from '@/data/site'
 import { reviews } from '@/data/reviews'
 import { useAsync } from '@/composables/useAsync'
-import { getClasses, getServices, getNews } from '@/api'
+import { getClasses, getHome, getServices, getNews } from '@/api'
 
 // Данные-витрину тянем с бэкенда. Пока грузятся — списки пустые,
 // секции просто дорисуются, как только придут данные.
 const { data: classesData } = useAsync(getClasses)
+const { data: homeData } = useAsync(getHome)
 const { data: servicesData } = useAsync(getServices)
 const { data: newsData } = useAsync(getNews)
 
@@ -25,6 +26,51 @@ const featuredClasses = computed(() => (classesData.value ?? []).slice(0, 3))
 const specialOffers = computed(() => servicesData.value ?? [])
 const latestNews = computed(() => (newsData.value ?? []).slice(0, 3))
 const featuredReviews = reviews.slice(0, 3)
+
+const heroPhotoIndex = ref(0)
+const heroPhotos = computed(() => homeData.value?.heroPhotos ?? [])
+const readyHeroPhotos = ref<string[]>([])
+let heroPhotoTimer: ReturnType<typeof setInterval> | undefined
+let heroPhotoPreloadRun = 0
+
+function stopHeroPhotoTimer() {
+  if (heroPhotoTimer) {
+    clearInterval(heroPhotoTimer)
+    heroPhotoTimer = undefined
+  }
+}
+
+function startHeroPhotoTimer() {
+  stopHeroPhotoTimer()
+  if (readyHeroPhotos.value.length < 2) return
+  heroPhotoTimer = setInterval(() => {
+    heroPhotoIndex.value = (heroPhotoIndex.value + 1) % readyHeroPhotos.value.length
+  }, 7000)
+}
+
+function preloadHeroPhoto(src: string): Promise<string | undefined> {
+  return new Promise((resolve) => {
+    const image = new Image()
+    image.onload = () => resolve(src)
+    image.onerror = () => resolve(undefined)
+    image.src = src
+  })
+}
+
+watch(heroPhotos, async (photos) => {
+  const preloadRun = ++heroPhotoPreloadRun
+  stopHeroPhotoTimer()
+  readyHeroPhotos.value = []
+  heroPhotoIndex.value = 0
+
+  const loadedPhotos = await Promise.all(photos.map(preloadHeroPhoto))
+  if (preloadRun !== heroPhotoPreloadRun) return
+
+  readyHeroPhotos.value = loadedPhotos.filter((src): src is string => src !== undefined)
+  startHeroPhotoTimer()
+})
+
+onBeforeUnmount(stopHeroPhotoTimer)
 
 const values = [
   { emoji: '🤗', title: 'Как семья', text: 'Тёплое и уважительное отношение к каждому ребёнку.' },
@@ -35,8 +81,8 @@ const values = [
 
 const stats = [
   { value: '15', label: 'направлений' },
-  { value: '4,6K', label: 'друзей ВКонтакте' },
-  { value: '5,0★', label: 'рейтинг' },
+  { value: '7', label: 'лет работы' },
+  { value: '5,0★', label: 'рейтинг в Яндекс Картах' },
   { value: '2', label: 'площадки в городе' },
 ]
 </script>
@@ -68,7 +114,16 @@ const stats = [
         <div class="blob blob--teal" aria-hidden="true"></div>
         <div class="blob blob--amber" aria-hidden="true"></div>
         <div class="hero__photo">
-          <PhotoFrame ratio="4 / 5" src="/media/photos/340.jpg" alt="Дети в центре «Мы Друзья»" />
+          <template v-if="readyHeroPhotos.length">
+            <img
+              v-for="(src, index) in readyHeroPhotos"
+              :key="src"
+              :src="src"
+              alt="Дети в центре «Мы Друзья»"
+              :class="{ 'hero__photo-image--active': index === heroPhotoIndex }"
+            />
+          </template>
+          <PhotoFrame v-else ratio="4 / 5" emoji="📸" />
         </div>
         <div class="hero__badge hero__badge--1" aria-hidden="true">🎨</div>
         <div class="hero__badge hero__badge--2" aria-hidden="true">⭐</div>
@@ -259,9 +314,25 @@ const stats = [
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
   rotate: -2deg;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
 }
 .hero__photo :deep(.photo) {
+  height: 100%;
   border-radius: var(--radius-lg);
+}
+.hero__photo img {
+  position: absolute;
+  inset: 10px;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  object-fit: cover;
+  border-radius: var(--radius-lg);
+  opacity: 0;
+  transition: opacity 0.8s var(--ease);
+}
+.hero__photo img.hero__photo-image--active {
+  opacity: 1;
 }
 /* Плавающие эмодзи-бейджи */
 .hero__badge {

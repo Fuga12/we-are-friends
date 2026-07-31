@@ -2,6 +2,7 @@
 /* Мобильное меню — выезжающая справа панель.
    Пункты с подпунктами раскрываются «гармошкой» по клику. */
 import { ref } from 'vue'
+import { ChevronDown } from 'lucide-vue-next'
 import { mainNav } from '@/data/navigation'
 import { site } from '@/data/site'
 import BaseButton from '@/components/ui/BaseButton.vue'
@@ -52,12 +53,12 @@ function toggle(label: string) {
                 @click="toggle(link.label)"
               >
                 {{ link.label }}
-                <span
+                <ChevronDown
                   class="panel__caret"
                   :class="{ 'panel__caret--open': expanded.has(link.label) }"
+                  :size="20"
                   aria-hidden="true"
-                  >▾</span
-                >
+                />
               </button>
               <ul v-show="expanded.has(link.label)" class="panel__sub">
                 <li v-for="child in link.children" :key="child.to">
@@ -72,8 +73,8 @@ function toggle(label: string) {
       </nav>
 
       <div class="panel__footer">
-        <BaseButton :href="site.phoneHref" variant="primary" block>
-          Позвонить
+        <BaseButton to="/contacts" variant="accent" block @click="emit('close')">
+          Записаться
         </BaseButton>
         <a class="panel__phone" :href="site.phoneHref">{{ site.phone }}</a>
       </div>
@@ -123,7 +124,7 @@ function toggle(label: string) {
 }
 .panel__caret {
   transition: transform var(--transition);
-  color: var(--color-text-muted);
+  color: var(--color-primary);
 }
 .panel__caret--open {
   transform: rotate(180deg);

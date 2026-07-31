@@ -5,7 +5,6 @@ import SiteLogo from './SiteLogo.vue'
 import DesktopNav from './DesktopNav.vue'
 import MobileMenu from './MobileMenu.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
-import { site } from '@/data/site'
 
 const route = useRoute()
 const menuOpen = ref(false)
@@ -43,8 +42,8 @@ onBeforeUnmount(() => {
       <DesktopNav class="header__desktop-nav" />
 
       <div class="header__actions">
-        <BaseButton :href="site.phoneHref" variant="accent" class="header__cta">
-          {{ site.phone }}
+        <BaseButton to="/contacts" variant="accent" class="header__cta">
+          Записаться
         </BaseButton>
 
         <!-- Кнопка-бургер (видна только на мобилке) -->
@@ -118,7 +117,7 @@ onBeforeUnmount(() => {
 }
 
 /* ============ АДАПТИВ ============
-   Точка перелома 1100px: ниже неё горизонтальное меню и телефон-кнопка
+   Точка перелома 1100px: ниже неё горизонтальное меню и CTA-кнопка
    уже не помещаются в одну строку и «съезжают», поэтому прячем их и
    показываем бургер. */
 @media (max-width: 1100px) {

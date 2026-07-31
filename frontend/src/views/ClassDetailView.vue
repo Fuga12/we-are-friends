@@ -114,6 +114,9 @@ watchEffect(() => {
   padding-block: var(--space-6) var(--space-7);
   background-color: var(--c-soft);
 }
+.detail-hero .container {
+  position: relative;
+}
 .back-link {
   display: inline-block;
   margin-bottom: var(--space-4);
@@ -126,7 +129,9 @@ watchEffect(() => {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  margin-bottom: var(--space-3);
+  position: absolute;
+  top: var(--space-7);
+  right: var(--container-pad);
 }
 .detail-hero__emoji {
   display: grid;
@@ -139,7 +144,10 @@ watchEffect(() => {
   box-shadow: var(--shadow-sm);
 }
 .detail-hero__age {
-  padding: 3px 14px;
+  display: grid;
+  place-items: center;
+  height: 64px;
+  padding-inline: 18px;
   font-weight: var(--weight-semibold);
   color: var(--c-strong);
   background-color: var(--color-surface);
@@ -220,6 +228,10 @@ watchEffect(() => {
 
 /* Адаптив: на планшете и мобилке — одна колонка, карточка не липкая */
 @media (max-width: 860px) {
+  .detail-hero__top {
+    position: static;
+    margin-bottom: var(--space-3);
+  }
   .detail-body {
     grid-template-columns: 1fr;
   }

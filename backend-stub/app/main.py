@@ -19,6 +19,7 @@ from litestar.static_files import create_static_files_router
 from app.data.classes import classes
 from app.data.documents import documents
 from app.data.gallery import gallery
+from app.data.home import home
 from app.data.news import news
 from app.data.services import special_offers
 from app.data.staff import staff
@@ -73,6 +74,12 @@ def _find(items: list[Item], item_id: int, not_found: str) -> Item:
         if item["id"] == item_id:
             return item
     raise NotFoundException(detail=not_found)
+
+
+# --- Главная страница -------------------------------------------------------
+@get("/api/home")
+async def get_home() -> Item:
+    return _absolutize(home, "heroPhotos")
 
 
 # --- Новости ---------------------------------------------------------------
@@ -139,6 +146,7 @@ media_router = create_static_files_router(path="/media", directories=[MEDIA_DIR]
 
 app = Litestar(
     route_handlers=[
+        get_home,
         list_news,
         get_news,
         list_classes,
