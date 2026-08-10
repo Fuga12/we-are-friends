@@ -4,6 +4,7 @@ import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import ToggleSwitch from 'primevue/toggleswitch'
+import DeleteButton from '@/components/admin/DeleteButton.vue'
 import { deleteAdminClassMedia, deleteAdminSummerShiftMedia, deleteMedia, getAdminClassForm, getAdminSummerShiftForm, saveAdminClassForm, saveAdminSummerShiftForm, uploadMedia, type AdminClassForm, type MediaItem } from '@/api/admin'
 
 const props = withDefaults(defineProps<{ token: string; id: number | null; kind?: 'class' | 'summer' }>(), { kind: 'class' })
@@ -68,7 +69,6 @@ async function uploadGallery(event: Event) {
   finally { uploading.value = false; if (galleryInput.value) galleryInput.value.value = '' }
 }
 async function removePhoto(item: MediaItem) {
-  if (!confirm('Удалить фотографию без возможности восстановления?')) return
   loading.value = true; error.value = ''
   try {
     if (props.id && originalAttachedIds.has(item.id)) {
@@ -122,13 +122,13 @@ onMounted(load)
     <div class="photo-section">
       <div class="form-heading"><div><h3>Обложка</h3><p>Основная фотография для карточки и отдельной страницы.</p></div><Button :label="coverMedia ? 'Заменить обложку' : 'Загрузить обложку'" :loading="uploading" @click="coverInput?.click()" /></div>
       <input ref="coverInput" hidden type="file" accept="image/*" @change="uploadCover" />
-      <article v-if="coverMedia" class="cover-photo"><img :src="coverMedia.url" :alt="coverMedia.alt" /><Button label="Удалить фотографию" severity="danger" text @click="removePhoto(coverMedia)" /></article>
+      <article v-if="coverMedia" class="cover-photo"><img :src="coverMedia.url" :alt="coverMedia.alt" /><DeleteButton label="Удалить фотографию" @confirm="removePhoto(coverMedia)" /></article>
       <p v-else class="empty-photo">Обложка не загружена. На сайте будет показана заглушка с эмодзи.</p>
     </div>
     <div class="photo-section">
       <div class="form-heading"><div><h3>Галерея {{ kind === 'summer' ? 'смены' : 'занятия' }}</h3><p>Дополнительные фотографии загружаются отдельно от обложки.</p></div><Button label="Добавить фотографии" :loading="uploading" @click="galleryInput?.click()" /></div>
       <input ref="galleryInput" hidden type="file" accept="image/*" multiple @change="uploadGallery" />
-      <div v-if="photoMedia.length" class="photo-grid"><article v-for="item in photoMedia" :key="item.id"><img :src="item.url" :alt="item.alt" /><Button label="Удалить" severity="danger" text size="small" @click="removePhoto(item)" /></article></div>
+      <div v-if="photoMedia.length" class="photo-grid"><article v-for="item in photoMedia" :key="item.id"><img :src="item.url" :alt="item.alt" /><DeleteButton size="small" @confirm="removePhoto(item)" /></article></div>
       <p v-else class="empty-photo">В галерее пока нет фотографий.</p>
     </div>
     <div class="publish-row"><div><strong>Показывать на сайте</strong><small>{{ form.isPublished ? (kind === 'summer' ? 'Смена опубликована' : 'Занятие опубликовано') : 'Сохранится как черновик' }}</small></div><ToggleSwitch v-model="form.isPublished" /></div>

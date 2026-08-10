@@ -6,6 +6,7 @@ import DataTable from 'primevue/datatable'
 import InputText from 'primevue/inputtext'
 import SelectButton from 'primevue/selectbutton'
 import ToggleSwitch from 'primevue/toggleswitch'
+import DeleteButton from '@/components/admin/DeleteButton.vue'
 import { deleteAdminItem, getAdminContent, getAdminItems, getAdminOverview, setPublication, signIn, signOut, updateAdminContent, updateAdminItem, type AdminCounts, type AdminItem, type AdminResource } from '@/api/admin'
 import ClassForm from './ClassForm.vue'
 import NewsForm from './NewsForm.vue'
@@ -123,7 +124,7 @@ async function reviewSaved(){reviewFormId.value=undefined;await loadItems();coun
 async function galleryChanged(){counts.value=await getAdminOverview(token.value)}
 async function newsSaved() { newsFormId.value = undefined; await loadItems(); counts.value = await getAdminOverview(token.value) }
 async function saveContent() { if (editingId.value === null) return; loading.value = true; error.value = ''; try { const payload = JSON.parse(contentDraft.value) as Record<string, unknown>; await updateAdminContent(active.value, editingId.value, payload, token.value); editingId.value = null; await loadItems() } catch (reason) { error.value = reason instanceof Error ? (reason instanceof SyntaxError ? 'Проверьте синтаксис JSON' : reason.message) : 'Не удалось сохранить материал' } finally { loading.value = false } }
-async function remove(item: Item) { if (!confirm(`Удалить «${item.title}» без возможности восстановления?`)) return; loading.value = true; try { await deleteAdminItem(active.value, item.id, token.value); await loadItems(); counts.value = await getAdminOverview(token.value) } catch (reason) { error.value = reason instanceof Error ? reason.message : 'Не удалось удалить запись' } finally { loading.value = false } }
+async function remove(item: Item) { loading.value = true; try { await deleteAdminItem(active.value, item.id, token.value); await loadItems(); counts.value = await getAdminOverview(token.value) } catch (reason) { error.value = reason instanceof Error ? reason.message : 'Не удалось удалить запись' } finally { loading.value = false } }
 
 async function leave() { try { await signOut(token.value) } finally { sessionStorage.removeItem('admin-token'); token.value = ''; items.value = [] } }
 
@@ -172,7 +173,7 @@ onMounted(() => { if (token.value) { void loadItems(); void getAdminOverview(tok
             <Column field="id" header="ID" style="width: 5rem" />
             <Column header="Название"><template #body="{ data }"><strong class="item-title">{{ data.title }}</strong></template></Column>
             <Column header="Показывать" style="width: 10rem"><template #body="{ data }"><ToggleSwitch :model-value="data.isPublished" @update:model-value="toggle(data, $event)" /></template></Column>
-            <Column header="Действия" style="width: 17rem"><template #body="{ data }"><Button label="Изменить" size="small" text @click="editContent(data)" /><Button label="Удалить" size="small" text severity="danger" @click="remove(data)" /></template></Column>
+            <Column header="Действия" style="width: 17rem"><template #body="{ data }"><Button label="Изменить" size="small" text @click="editContent(data)" /><DeleteButton size="small" @confirm="remove(data)" /></template></Column>
           </DataTable>
         </section>
         <section v-if="active==='gallery'" class="content-card"><GalleryManager :token="token" @changed="galleryChanged"/></section>
