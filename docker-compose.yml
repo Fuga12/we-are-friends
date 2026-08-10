@@ -5,8 +5,10 @@ services:
       POSTGRES_DB: we_are_friends
       POSTGRES_USER: we_are_friends
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-we_are_friends}
+    # Bind mounts make the durable data visible on the host, independent of
+    # container lifetime and Docker volume pruning.
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - ${DATA_DIR:-./data}/postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U we_are_friends -d we_are_friends"]
       interval: 5s
@@ -20,7 +22,7 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     volumes:
-      - minio-data:/data
+      - ${DATA_DIR:-./data}/minio:/data
 
   minio-init:
     image: minio/mc:latest
@@ -34,36 +36,6 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
 
-  stub:
-    build: ./backend-stub
-    profiles: [seed]
-
-  seed:
-    build:
-      context: .
-      dockerfile: backend-go/Seed.Dockerfile
-    profiles: [seed]
-    depends_on:
-      postgres:
-        condition: service_healthy
-      minio-init:
-        condition: service_completed_successfully
-      stub:
-        condition: service_started
-    environment:
-      DATABASE_URL: postgres://we_are_friends:${POSTGRES_PASSWORD:-we_are_friends}@postgres:5432/we_are_friends?sslmode=disable
-      MINIO_ENDPOINT: minio:9000
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
-      MINIO_BUCKET: media
-      MEDIA_PUBLIC_BASE_URL: /media
-      PORT: "8080"
-      CORS_ORIGINS: http://localhost
-      ADMIN_USER: ${ADMIN_USER:-admin}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
-      STUB_URL: http://stub:3001
-      STUB_MEDIA_DIR: /app/media
-
   api:
     build: ./backend-go
     depends_on:
@@ -72,15 +44,10 @@ services:
       minio-init:
         condition: service_completed_successfully
     environment:
-      DATABASE_URL: postgres://we_are_friends:${POSTGRES_PASSWORD:-we_are_friends}@postgres:5432/we_are_friends?sslmode=disable
-      MINIO_ENDPOINT: minio:9000
+      APP_ENV: production
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
-      MINIO_BUCKET: media
-      MEDIA_PUBLIC_BASE_URL: /media
-      PORT: "8080"
-      CORS_ORIGINS: http://localhost
-      ADMIN_USER: ${ADMIN_USER:-admin}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
 
   web:
@@ -88,8 +55,6 @@ services:
     depends_on:
       - api
     ports:
-      - "${WEB_PORT:-8088}:80"
-
-volumes:
-  postgres-data:
-  minio-data:
+      # The host Nginx proxy is the public entry point; the container itself
+      # stays reachable only from this machine.
+      - "127.0.0.1:${WEB_PORT:-8088}:80"

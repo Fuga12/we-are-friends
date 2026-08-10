@@ -1,6 +1,6 @@
 COMPOSE ?= docker-compose
 
-.PHONY: up down run test migrate sqlc seed
+.PHONY: up down run test migrate sqlc
 
 up:
 	$(COMPOSE) up -d
@@ -19,6 +19,3 @@ migrate:
 
 sqlc:
 	go run github.com/sqlc-dev/sqlc/cmd/sqlc@v1.29.0 generate
-
-seed:
-	go run ./seed

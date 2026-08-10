@@ -9,8 +9,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Up applies the initial schema exactly once. The advisory lock prevents two
-// API replicas from attempting the first migration simultaneously.
+type migration struct {
+	version int
+	sql     string
+}
+
+// Up serially applies every embedded migration once. The table records each
+// version independently, allowing production databases to move beyond v1.
 func Up(ctx context.Context, pool *pgxpool.Pool) error {
 	if _, err := pool.Exec(ctx, `select pg_advisory_lock(91726301)`); err != nil {
 		return err
@@ -19,28 +24,26 @@ func Up(ctx context.Context, pool *pgxpool.Pool) error {
 	if _, err := pool.Exec(ctx, `create table if not exists app_schema_versions (version integer primary key)`); err != nil {
 		return err
 	}
-	var applied bool
-	if err := pool.QueryRow(ctx, `select exists(select 1 from app_schema_versions where version=1)`).Scan(&applied); err != nil {
-		return err
-	}
-	if applied {
-		return nil
-	}
-	var mediaExists bool
-	if err := pool.QueryRow(ctx, `select to_regclass('public.media') is not null`).Scan(&mediaExists); err != nil {
-		return err
-	}
-	if !mediaExists {
-		upSQL := strings.Split(migrations.Initial, "-- +goose Down")[0]
+	for _, item := range []migration{{1, migrations.Initial}, {2, migrations.AdminAuthAndPublication}} {
+		var applied bool
+		if err := pool.QueryRow(ctx, `select exists(select 1 from app_schema_versions where version=$1)`, item.version).Scan(&applied); err != nil {
+			return err
+		}
+		if applied {
+			continue
+		}
+		upSQL := strings.Split(item.sql, "-- +goose Down")[0]
 		for _, statement := range strings.Split(upSQL, ";") {
 			if strings.TrimSpace(statement) == "" {
 				continue
 			}
 			if _, err := pool.Exec(ctx, statement); err != nil {
-				return fmt.Errorf("apply initial schema: %w", err)
+				return fmt.Errorf("apply migration %d: %w", item.version, err)
 			}
 		}
+		if _, err := pool.Exec(ctx, `insert into app_schema_versions(version) values ($1)`, item.version); err != nil {
+			return err
+		}
 	}
-	_, err := pool.Exec(ctx, `insert into app_schema_versions(version) values (1) on conflict do nothing`)
-	return err
+	return nil
 }

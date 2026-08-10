@@ -3,7 +3,7 @@
 frontend/node_modules
 frontend/dist
 photo
-tmp
+curent_data
 cropped-image_full.png
 backend-stub/.venv
 backend-go/.env

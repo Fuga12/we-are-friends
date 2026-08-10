@@ -44,10 +44,6 @@ const documents = computed(() => data.value ?? [])
         </li>
       </ul>
 
-      <p v-if="!loading && !error" class="text-muted text-center doc-note">
-        Ссылки — заглушки. Загрузи реальные файлы и подставь адреса на бэкенде, в
-        <code>backend-stub/app/data/documents.py</code>.
-      </p>
     </div>
   </section>
 </template>
