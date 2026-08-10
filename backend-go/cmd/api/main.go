@@ -42,7 +42,7 @@ func main() {
 		slog.Error("apply database schema", "error", err)
 		os.Exit(1)
 	}
-	if err := database.BootstrapAdmin(ctx, cfg.AdminUser, cfg.AdminPassword); err != nil {
+	if err := database.BootstrapAdmin(ctx, cfg.AdminUser); err != nil {
 		slog.Error("bootstrap administrator", "error", err)
 		os.Exit(1)
 	}

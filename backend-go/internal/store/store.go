@@ -11,7 +11,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"golang.org/x/crypto/bcrypt"
 )
 
 var ErrNotFound = errors.New("record not found")
@@ -154,23 +153,20 @@ type Session struct {
 	ExpiresAt time.Time
 }
 
-func (s *Store) BootstrapAdmin(ctx context.Context, login, password string) error {
-	var exists bool
-	if err := s.pool.QueryRow(ctx, `select exists(select 1 from admin_users)`).Scan(&exists); err != nil || exists {
-		return err
-	}
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return err
-	}
-	_, err = s.pool.Exec(ctx, `insert into admin_users(login,password_hash,role) values ($1,$2,'administrator')`, login, string(hash))
+func (s *Store) BootstrapAdmin(ctx context.Context, login string) error {
+	// The administrator password is checked against the process environment.
+	// This row only provides a stable identity for server-side sessions.
+	_, err := s.pool.Exec(ctx, `
+		insert into admin_users(login,password_hash,role)
+		values ($1,'environment-authentication','administrator')
+		on conflict (login) do update
+		set password_hash=excluded.password_hash, role=excluded.role, updated_at=now()`, login)
 	return err
 }
-func (s *Store) Login(ctx context.Context, login, password string) (Session, error) {
+func (s *Store) CreateSession(ctx context.Context, login string) (Session, error) {
 	var user AdminUser
-	var hash string
-	err := s.pool.QueryRow(ctx, `select id,login,role,password_hash from admin_users where login=$1`, login).Scan(&user.ID, &user.Login, &user.Role, &hash)
-	if err != nil || bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)) != nil {
+	err := s.pool.QueryRow(ctx, `select id,login,role from admin_users where login=$1`, login).Scan(&user.ID, &user.Login, &user.Role)
+	if err != nil {
 		return Session{}, ErrNotFound
 	}
 	token := uuid.NewString() + uuid.NewString()

@@ -2,6 +2,8 @@ package httpapi
 
 import (
 	"context"
+	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
@@ -26,8 +28,10 @@ type mediaStorage interface {
 }
 
 type handler struct {
-	store *store.Store
-	media mediaURLs
+	store         *store.Store
+	media         mediaURLs
+	adminUser     string
+	adminPassword string
 }
 type adminContextKey struct{}
 type loginRequest struct {
@@ -471,13 +475,27 @@ func (h handler) login(w http.ResponseWriter, r *http.Request) {
 		h.validationFailure(w, "login", "Укажите логин и пароль")
 		return
 	}
-	session, err := h.store.Login(r.Context(), strings.TrimSpace(input.Login), input.Password)
+	if !validAdminCredentials(strings.TrimSpace(input.Login), input.Password, h.adminUser, h.adminPassword) {
+		writeJSON(w, http.StatusUnauthorized, ErrorResponse{Error: APIError{Code: "invalid_credentials", Message: "Неверный логин или пароль"}})
+		return
+	}
+	session, err := h.store.CreateSession(r.Context(), h.adminUser)
 	if err != nil {
 		writeJSON(w, http.StatusUnauthorized, ErrorResponse{Error: APIError{Code: "invalid_credentials", Message: "Неверный логин или пароль"}})
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"token": session.Token, "expiresAt": session.ExpiresAt, "user": map[string]any{"id": session.User.ID, "login": session.User.Login, "role": session.User.Role}})
 }
+
+func validAdminCredentials(login, password, expectedLogin, expectedPassword string) bool {
+	loginHash := sha256.Sum256([]byte(login))
+	expectedLoginHash := sha256.Sum256([]byte(expectedLogin))
+	passwordHash := sha256.Sum256([]byte(password))
+	expectedPasswordHash := sha256.Sum256([]byte(expectedPassword))
+	return subtle.ConstantTimeCompare(loginHash[:], expectedLoginHash[:]) == 1 &&
+		subtle.ConstantTimeCompare(passwordHash[:], expectedPasswordHash[:]) == 1
+}
+
 func (h handler) logout(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(adminContextKey{}).(store.AdminUser)
 	if err := h.store.RevokeSessions(r.Context(), user.ID); err != nil {

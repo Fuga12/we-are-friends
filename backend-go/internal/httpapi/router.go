@@ -29,7 +29,7 @@ func NewRouter(cfg config.Config, database *store.Store, media mediaURLs) http.H
 		MaxAge:           300,
 	}))
 
-	h := handler{store: database, media: media}
+	h := handler{store: database, media: media, adminUser: cfg.AdminUser, adminPassword: cfg.AdminPassword}
 	r.Get("/api", healthz)
 	r.Get("/api/healthz", healthz)
 	r.Get("/api/home", h.home)
