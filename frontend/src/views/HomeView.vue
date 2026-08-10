@@ -13,12 +13,11 @@ import { site } from '@/data/site'
 import { reviews } from '@/data/reviews'
 import { specialOffers } from '@/data/services'
 import { useAsync } from '@/composables/useAsync'
-import { getClasses, getHome, getNews } from '@/api'
+import { getClasses, getNews } from '@/api'
 
 // Данные-витрину тянем с бэкенда. Пока грузятся — списки пустые,
 // секции просто дорисуются, как только придут данные.
 const { data: classesData } = useAsync(getClasses)
-const { data: homeData } = useAsync(getHome)
 const { data: newsData } = useAsync(getNews)
 
 // На главной показываем только часть данных — «витрину»
@@ -27,7 +26,7 @@ const latestNews = computed(() => (newsData.value ?? []).slice(0, 3))
 const featuredReviews = reviews.slice(0, 3)
 
 const heroPhotoIndex = ref(0)
-const heroPhotos = computed(() => homeData.value?.heroPhotos ?? [])
+const heroPhotos = Array.from({ length: 20 }, (_, index) => `/home_photos/${index + 1}.jpg`)
 const readyHeroPhotos = ref<string[]>([])
 let heroPhotoTimer: ReturnType<typeof setInterval> | undefined
 let heroPhotoPreloadRun = 0
@@ -56,7 +55,7 @@ function preloadHeroPhoto(src: string): Promise<string | undefined> {
   })
 }
 
-watch(heroPhotos, async (photos) => {
+watch(() => heroPhotos, async (photos) => {
   const preloadRun = ++heroPhotoPreloadRun
   stopHeroPhotoTimer()
   readyHeroPhotos.value = []
@@ -67,7 +66,7 @@ watch(heroPhotos, async (photos) => {
 
   readyHeroPhotos.value = loadedPhotos.filter((src): src is string => src !== undefined)
   startHeroPhotoTimer()
-})
+}, { immediate: true })
 
 onBeforeUnmount(stopHeroPhotoTimer)
 
