@@ -214,13 +214,14 @@ label { display:grid; gap:.45rem; font-weight:700; }.eyebrow { color:#e46129; fo
 .admin-intro { display:flex; justify-content:space-between; align-items:end; gap:2rem; margin-bottom:1.8rem; }.admin-intro > p { max-width:430px; margin:0; }
 .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:.75rem; margin-bottom:1.8rem; }.stats article { background:#e9f3ef; border-radius:14px; padding:1rem; display:grid; gap:.2rem; }.stats strong{font-size:1.6rem}.stats span{font-size:.8rem;color:#527168}
 .content-toolbar { display:flex; justify-content:space-between; gap:1rem; margin-bottom:1.25rem; }.content-card small { display:block; margin-top:.2rem; } :deep(.p-datatable td small) { display:block; color:#6f766e; margin-top:.25rem; }
-.admin-navigation{margin-bottom:1rem}.admin-navigation .content-toolbar{margin-bottom:0}.content-list{padding-top:1.5rem}
-.toolbar-actions { display:flex; gap:.75rem; align-items:center }.toolbar-actions :deep(.p-inputtext) { min-width:13rem }
+.admin-navigation{margin-bottom:1rem}.admin-navigation .content-toolbar{margin-bottom:0;flex-direction:column;align-items:stretch}.admin-navigation :deep(.p-selectbutton){display:grid;grid-template-columns:repeat(8,minmax(0,1fr));width:100%}.admin-navigation :deep(.p-selectbutton .p-button){min-width:0;padding:.7rem .45rem;white-space:normal;line-height:1.2}.content-list{padding-top:1.5rem}
+.toolbar-actions { display:flex; width:100%; justify-content:flex-end; flex-wrap:wrap; gap:.75rem; align-items:center }.toolbar-actions :deep(.p-inputtext) { min-width:13rem }
 .order-hint { margin:0 0 1.25rem; padding:.85rem 1rem; border-radius:10px; background:#f1f6f3; color:#527168; line-height:1.45 }.item-title { font-weight:700 }
 .order-input { width:100%; padding:.55rem; border:1px solid #d9d4ca; border-radius:6px; color:#173d35 }
 .editor-card { margin-top:1.8rem }.editor-card h2 { margin:0 }.json-editor { width:100%; min-height:28rem; font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; padding:1rem; border:1px solid #d9d4ca; border-radius:10px; resize:vertical; box-sizing:border-box; color:#173d35 }.editor-actions { display:flex; gap:.5rem; margin-top:1rem }
 :deep(.p-inputtext) { width:100%; background:#fff; color:#173d35; border-color:#d9d4ca; }
 :deep(.p-inputtext:hover), :deep(.p-inputtext:enabled:focus) { border-color:#1a6757; }
+@media(max-width:850px){.admin-navigation{overflow:hidden}.admin-navigation :deep(.p-selectbutton){display:flex;overflow-x:auto;justify-content:flex-start}.admin-navigation :deep(.p-selectbutton .p-button){flex:0 0 auto;padding:.7rem 1rem}.toolbar-actions{justify-content:stretch}.toolbar-actions>*{flex:1 1 12rem}}
 :deep(.p-inputtext::placeholder) { color:#7b857e; }
 @media(max-width:760px){.admin-intro,.content-toolbar,.toolbar-actions{align-items:stretch;flex-direction:column}.stats{grid-template-columns:repeat(2,1fr)}}
 </style>
