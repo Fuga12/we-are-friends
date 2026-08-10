@@ -14,6 +14,7 @@ import StaffForm from './StaffForm.vue'
 import DocumentForm from './DocumentForm.vue'
 import ReviewForm from './ReviewForm.vue'
 import GalleryManager from './GalleryManager.vue'
+import LeadManager from './LeadManager.vue'
 
 type Item = AdminItem
 
@@ -25,6 +26,7 @@ const sections: { label: string; value: AdminResource }[] = [
   { label: 'Документы', value: 'documents' },
   { label: 'Отзывы', value: 'reviews' },
   { label: 'Галерея', value: 'gallery' },
+  { label: 'Заявки', value: 'leads' },
 ]
 const user = ref('')
 const password = ref('')
@@ -52,7 +54,7 @@ const filtered = computed(() => {
 })
 
 async function loadItems() {
-  if(active.value==='gallery'){items.value=[];return}
+  if(['gallery','leads'].includes(active.value)){items.value=[];return}
   items.value = await getAdminItems(active.value, token.value)
 }
 
@@ -152,20 +154,20 @@ onMounted(() => { if (token.value) { void loadItems(); void getAdminOverview(tok
       <template v-else>
         <section class="admin-intro">
           <div><p class="eyebrow">Контент сайта</p><h1>Публикации</h1></div>
-          <p>{{ ['classes','summer-shifts'].includes(active) ? 'Основные данные меняются через форму. Видимость можно быстро переключить в списке.' : active === 'news' ? 'Содержание новости и фотографии меняются через форму. Видимость можно переключить в списке.' : 'Редактируйте названия, порядок и видимость прямо в списке. Удаление требует отдельного подтверждения.' }}</p>
+          <p>{{ active==='leads' ? 'Здесь находятся заявки, отправленные посетителями через форму записи.' : ['classes','summer-shifts'].includes(active) ? 'Основные данные меняются через форму. Видимость можно быстро переключить в списке.' : active === 'news' ? 'Содержание новости и фотографии меняются через форму. Видимость можно переключить в списке.' : 'Редактируйте названия, порядок и видимость прямо в списке. Удаление требует отдельного подтверждения.' }}</p>
         </section>
         <section v-if="counts" class="stats">
-          <article v-for="(label, key) in { classes: 'Занятия', 'summer-shifts': 'Летние смены', news: 'Новости', staff: 'Сотрудники', documents: 'Документы', reviews:'Отзывы', gallery: 'Фото' }" :key="key">
+          <article v-for="(label, key) in { classes: 'Занятия', 'summer-shifts': 'Летние смены', news: 'Новости', staff: 'Сотрудники', documents: 'Документы', reviews:'Отзывы', gallery: 'Фото', leads:'Новые заявки' }" :key="key">
             <strong>{{ counts[key as keyof AdminCounts] }}</strong><span>{{ label }}</span>
           </article>
         </section>
         <section class="content-card admin-navigation">
           <div class="content-toolbar">
             <SelectButton v-model="active" :options="sections" option-label="label" option-value="value" @change="changeSection" />
-            <div v-if="active!=='gallery'" class="toolbar-actions"><InputText v-model="query" placeholder="Найти запись" /><Button v-if="active === 'classes'" label="Новое занятие" @click="classFormId = null" /><Button v-if="active === 'summer-shifts'" label="Новая смена" @click="summerFormId = null" /><Button v-if="active === 'news'" label="Новая новость" @click="newsFormId = null" /><Button v-if="active==='staff'" label="Новый сотрудник" @click="staffFormId=null"/><Button v-if="active==='documents'" label="Новый документ" @click="documentFormId=null"/><Button v-if="active==='reviews'" label="Новый отзыв" @click="reviewFormId=null"/></div>
+            <div v-if="!['gallery','leads'].includes(active)" class="toolbar-actions"><InputText v-model="query" placeholder="Найти запись" /><Button v-if="active === 'classes'" label="Новое занятие" @click="classFormId = null" /><Button v-if="active === 'summer-shifts'" label="Новая смена" @click="summerFormId = null" /><Button v-if="active === 'news'" label="Новая новость" @click="newsFormId = null" /><Button v-if="active==='staff'" label="Новый сотрудник" @click="staffFormId=null"/><Button v-if="active==='documents'" label="Новый документ" @click="documentFormId=null"/><Button v-if="active==='reviews'" label="Новый отзыв" @click="reviewFormId=null"/></div>
           </div>
         </section>
-        <section v-if="active!=='gallery'" class="content-card content-list">
+        <section v-if="!['gallery','leads'].includes(active)" class="content-card content-list">
           <p v-if="active!=='news'" class="order-hint">Записи отображаются в порядке, согласно этому списку.<span v-if="query.trim()"> Очистите поиск, чтобы включить перетаскивание.</span></p>
           <small v-if="error" class="form-error">{{ error }}</small>
           <DataTable :value="filtered" :loading="loading" striped-rows data-key="id" empty-message="Записей нет" @row-reorder="reorderClasses">
@@ -177,6 +179,7 @@ onMounted(() => { if (token.value) { void loadItems(); void getAdminOverview(tok
           </DataTable>
         </section>
         <section v-if="active==='gallery'" class="content-card"><GalleryManager :token="token" @changed="galleryChanged"/></section>
+        <section v-if="active==='leads'" class="content-card"><LeadManager :token="token" @changed="galleryChanged"/></section>
         <section v-if="classFormId !== undefined" class="content-card editor-card">
           <ClassForm :key="classFormId ?? 'new'" :token="token" :id="classFormId" @saved="classSaved" @cancel="classFormId = undefined" />
         </section>
@@ -209,7 +212,7 @@ onMounted(() => { if (token.value) { void loadItems(); void getAdminOverview(tok
 .login-card { width:min(460px,100%); margin:7vh auto; display:grid; gap:1rem; }.login-card h1,.admin-intro h1 { margin:0; }.login-card p,.admin-intro p { color:#647067; line-height:1.5; }
 label { display:grid; gap:.45rem; font-weight:700; }.eyebrow { color:#e46129; font-weight:800; text-transform:uppercase; letter-spacing:.08em; font-size:.75rem; margin:0 0 .35rem; }.form-error { color:#b42318; }
 .admin-intro { display:flex; justify-content:space-between; align-items:end; gap:2rem; margin-bottom:1.8rem; }.admin-intro > p { max-width:430px; margin:0; }
-.stats { display:grid; grid-template-columns:repeat(6,1fr); gap:.75rem; margin-bottom:1.8rem; }.stats article { background:#e9f3ef; border-radius:14px; padding:1rem; display:grid; gap:.2rem; }.stats strong{font-size:1.6rem}.stats span{font-size:.8rem;color:#527168}
+.stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:.75rem; margin-bottom:1.8rem; }.stats article { background:#e9f3ef; border-radius:14px; padding:1rem; display:grid; gap:.2rem; }.stats strong{font-size:1.6rem}.stats span{font-size:.8rem;color:#527168}
 .content-toolbar { display:flex; justify-content:space-between; gap:1rem; margin-bottom:1.25rem; }.content-card small { display:block; margin-top:.2rem; } :deep(.p-datatable td small) { display:block; color:#6f766e; margin-top:.25rem; }
 .admin-navigation{margin-bottom:1rem}.admin-navigation .content-toolbar{margin-bottom:0}.content-list{padding-top:1.5rem}
 .toolbar-actions { display:flex; gap:.75rem; align-items:center }.toolbar-actions :deep(.p-inputtext) { min-width:13rem }

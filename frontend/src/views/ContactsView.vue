@@ -5,23 +5,29 @@ import PageHero from '@/components/layout/PageHero.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import { site } from '@/data/site'
 
-/* Простая форма записи. Бэкенда пока нет — по отправке показываем
-   сообщение об успехе. Когда появится API, замени тело submit() на fetch(). */
 const form = reactive({ name: '', phone: '', message: '' })
 const errors = reactive<{ name?: string; phone?: string }>({})
 const sent = ref(false)
+const sending = ref(false)
+const submitError = ref('')
 
 function validate() {
   errors.name = form.name.trim() ? undefined : 'Пожалуйста, укажите имя'
-  errors.phone = /[\d]{5,}/.test(form.phone) ? undefined : 'Укажите корректный телефон'
+  errors.phone = form.phone.replace(/\D/g, '').length >= 5 ? undefined : 'Укажите корректный телефон'
   return !errors.name && !errors.phone
 }
 
-function submit() {
+async function submit() {
   if (!validate()) return
-  // TODO: отправить на бэкенд, например:
-  // await fetch('/api/leads', { method: 'POST', body: JSON.stringify(form) })
-  sent.value = true
+  sending.value = true
+  submitError.value = ''
+  try {
+    const response = await fetch('/api/leads', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(form) })
+    if(!response.ok) throw new Error('Не удалось отправить заявку')
+    sent.value = true
+  } catch (error) {
+    submitError.value = error instanceof Error ? error.message : 'Не удалось отправить заявку'
+  } finally { sending.value = false }
 }
 
 const contactCards = [
@@ -119,7 +125,8 @@ const contactCards = [
               ></textarea>
             </div>
 
-            <BaseButton type="submit" variant="accent" size="lg" block>Отправить заявку</BaseButton>
+            <BaseButton type="submit" variant="accent" size="lg" block :disabled="sending">{{sending?'Отправляем…':'Отправить заявку'}}</BaseButton>
+            <p v-if="submitError" class="field__error">{{submitError}}</p>
             <p class="form__note text-muted">
               Нажимая кнопку, вы соглашаетесь с обработкой персональных данных.
             </p>

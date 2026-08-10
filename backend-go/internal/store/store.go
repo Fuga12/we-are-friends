@@ -71,7 +71,16 @@ type Review struct {
 }
 
 type AdminCounts struct {
-	Classes, SummerShifts, News, Services, Staff, Documents, Gallery, Reviews int64
+	Classes, SummerShifts, News, Services, Staff, Documents, Gallery, Reviews, Leads int64
+}
+
+type Lead struct {
+	ID          int64     `json:"id"`
+	Name        string    `json:"name"`
+	Phone       string    `json:"phone"`
+	Message     string    `json:"message"`
+	IsProcessed bool      `json:"isProcessed"`
+	CreatedAt   time.Time `json:"createdAt"`
 }
 
 type AdminItem struct {
@@ -693,11 +702,51 @@ func (s *Store) AdminCounts(ctx context.Context) (AdminCounts, error) {
 	row := s.pool.QueryRow(ctx, `select
 	  (select count(*) from classes), (select count(*) from summer_shifts), (select count(*) from news),
   (select count(*) from services), (select count(*) from staff),
-  (select count(*) from documents), (select count(*) from gallery), (select count(*) from reviews)`)
-	if err := row.Scan(&result.Classes, &result.SummerShifts, &result.News, &result.Services, &result.Staff, &result.Documents, &result.Gallery, &result.Reviews); err != nil {
+	  (select count(*) from documents), (select count(*) from gallery), (select count(*) from reviews),
+	  (select count(*) from leads where not is_processed)`)
+	if err := row.Scan(&result.Classes, &result.SummerShifts, &result.News, &result.Services, &result.Staff, &result.Documents, &result.Gallery, &result.Reviews, &result.Leads); err != nil {
 		return AdminCounts{}, err
 	}
 	return result, nil
+}
+
+func (s *Store) CreateLead(ctx context.Context, name, phone, message string) (int64, error) {
+	var id int64
+	err := s.pool.QueryRow(ctx, `insert into leads(name,phone,message) values ($1,$2,$3) returning id`, name, phone, message).Scan(&id)
+	return id, err
+}
+
+func (s *Store) Leads(ctx context.Context) ([]Lead, error) {
+	rows, err := s.pool.Query(ctx, `select id,name,phone,message,is_processed,created_at from leads order by is_processed,created_at desc`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	result := []Lead{}
+	for rows.Next() {
+		var item Lead
+		if err := rows.Scan(&item.ID, &item.Name, &item.Phone, &item.Message, &item.IsProcessed, &item.CreatedAt); err != nil {
+			return nil, err
+		}
+		result = append(result, item)
+	}
+	return result, rows.Err()
+}
+
+func (s *Store) SetLeadProcessed(ctx context.Context, id int64, processed bool) error {
+	command, err := s.pool.Exec(ctx, `update leads set is_processed=$1 where id=$2`, processed, id)
+	if err == nil && command.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return err
+}
+
+func (s *Store) DeleteLead(ctx context.Context, id int64) error {
+	command, err := s.pool.Exec(ctx, `delete from leads where id=$1`, id)
+	if err == nil && command.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return err
 }
 
 func (s *Store) SetPublished(ctx context.Context, resource string, id int64, published bool) error {

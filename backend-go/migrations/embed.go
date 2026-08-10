@@ -16,3 +16,6 @@ var SummerShifts string
 
 //go:embed 0004_seed_reviews.sql
 var SeedReviews string
+
+//go:embed 0005_leads.sql
+var Leads string

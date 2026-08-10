@@ -1,4 +1,4 @@
-export type AdminResource = 'classes' | 'summer-shifts' | 'news' | 'services' | 'staff' | 'documents' | 'reviews' | 'gallery'
+export type AdminResource = 'classes' | 'summer-shifts' | 'news' | 'services' | 'staff' | 'documents' | 'reviews' | 'gallery' | 'leads'
 export type AdminCounts = Record<AdminResource | 'gallery', number>
 export type AdminItem = { id: number; title: string; isPublished: boolean; position: number }
 export type AdminSession = { token: string; expiresAt: string; user: { id: number; login: string; role: 'administrator' | 'editor' } }
@@ -39,6 +39,7 @@ export type AdminStaffForm = { id?:number; name:string; role:string; bio:string;
 export type AdminDocumentForm = { id?:number; title:string; description:string; fileMediaId:number; displayFileType:string; displayFileSize:string; position:number; isPublished:boolean; fileMedia?:MediaItem }
 export type AdminReviewForm = { id?:number; author:string; role:string; text:string; rating:number; position:number; isPublished:boolean }
 export type AdminGalleryItem = { id:number; mediaId:number; title:string; position:number; media:MediaItem }
+export type AdminLead = { id:number; name:string; phone:string; message:string; isProcessed:boolean; createdAt:string }
 
 function headers(token: string, json = false): HeadersInit {
   return { Authorization: `Bearer ${token}`, ...(json ? { 'Content-Type': 'application/json' } : {}) }
@@ -97,3 +98,6 @@ export const saveAdminReviewForm=(token:string,value:AdminReviewForm)=>request<{
 export const getAdminGallery=(token:string)=>request<AdminGalleryItem[]>('/gallery',token)
 export const addAdminGallery=(token:string,mediaId:number,title='')=>request<{id:number}>('/gallery',token,{method:'POST',headers:headers(token,true),body:JSON.stringify({mediaId,title})})
 export const deleteAdminGallery=(token:string,id:number)=>request<void>(`/gallery/${id}`,token,{method:'DELETE'})
+export const getAdminLeads=(token:string)=>request<AdminLead[]>('/leads',token)
+export const setAdminLeadProcessed=(token:string,id:number,isProcessed:boolean)=>request<void>(`/leads/${id}`,token,{method:'PATCH',headers:headers(token,true),body:JSON.stringify({isProcessed})})
+export const deleteAdminLead=(token:string,id:number)=>request<void>(`/leads/${id}`,token,{method:'DELETE'})

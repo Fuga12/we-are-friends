@@ -46,6 +46,7 @@ func NewRouter(cfg config.Config, database *store.Store, media mediaURLs) http.H
 	r.Get("/api/gallery", h.gallery)
 	r.Get("/api/reviews", h.reviews)
 	r.Get("/api/site", h.site)
+	r.Post("/api/leads", h.createLead)
 
 	r.Post("/api/admin/login", h.login)
 	admin := chi.NewRouter()
@@ -80,6 +81,9 @@ func NewRouter(cfg config.Config, database *store.Store, media mediaURLs) http.H
 	admin.Get("/gallery", h.adminGallery)
 	admin.Post("/gallery", h.addAdminGallery)
 	admin.Delete("/gallery/{id}", h.deleteAdminGallery)
+	admin.Get("/leads", h.adminLeads)
+	admin.Patch("/leads/{id}", h.updateAdminLead)
+	admin.Delete("/leads/{id}", h.deleteAdminLead)
 	admin.Get("/{resource}", h.adminItems)
 	admin.Get("/{resource}/{id}/content", h.adminContent)
 	admin.Patch("/{resource}/{id}/content", h.updateAdminContent)

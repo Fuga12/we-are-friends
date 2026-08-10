@@ -40,6 +40,14 @@ type loginRequest struct {
 	Login    string `json:"login"`
 	Password string `json:"password"`
 }
+type leadRequest struct {
+	Name    string `json:"name"`
+	Phone   string `json:"phone"`
+	Message string `json:"message"`
+}
+type leadStatusRequest struct {
+	IsProcessed bool `json:"isProcessed"`
+}
 
 type publicationRequest struct {
 	IsPublished bool `json:"isPublished"`
@@ -459,6 +467,61 @@ func (h handler) site(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(data)
 }
 
+func (h handler) createLead(w http.ResponseWriter, r *http.Request) {
+	var input leadRequest
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		h.validationFailure(w, "form", "Не удалось прочитать заявку")
+		return
+	}
+	input.Name = strings.TrimSpace(input.Name)
+	input.Phone = strings.TrimSpace(input.Phone)
+	input.Message = strings.TrimSpace(input.Message)
+	if input.Name == "" || len(input.Phone) < 5 {
+		h.validationFailure(w, "phone", "Укажите имя и корректный телефон")
+		return
+	}
+	if len(input.Name) > 150 || len(input.Phone) > 50 || len(input.Message) > 3000 {
+		h.validationFailure(w, "form", "Заявка содержит слишком длинные поля")
+		return
+	}
+	id, err := h.store.CreateLead(r.Context(), input.Name, input.Phone, input.Message)
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, map[string]int64{"id": id})
+}
+
+func (h handler) adminLeads(w http.ResponseWriter, r *http.Request) {
+	items, err := h.store.Leads(r.Context())
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, items)
+}
+
+func (h handler) updateAdminLead(w http.ResponseWriter, r *http.Request) {
+	var input leadStatusRequest
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		h.validationFailure(w, "isProcessed", "Не удалось прочитать статус заявки")
+		return
+	}
+	if err := h.store.SetLeadProcessed(r.Context(), pathID(r), input.IsProcessed); err != nil {
+		h.failure(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h handler) deleteAdminLead(w http.ResponseWriter, r *http.Request) {
+	if err := h.store.DeleteLead(r.Context(), pathID(r)); err != nil {
+		h.failure(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h handler) adminOverview(w http.ResponseWriter, r *http.Request) {
 	counts, err := h.store.AdminCounts(r.Context())
 	if err != nil {
@@ -469,6 +532,7 @@ func (h handler) adminOverview(w http.ResponseWriter, r *http.Request) {
 		"classes": counts.Classes, "summer-shifts": counts.SummerShifts, "news": counts.News, "services": counts.Services,
 		"staff": counts.Staff, "documents": counts.Documents, "gallery": counts.Gallery,
 		"reviews": counts.Reviews,
+		"leads":   counts.Leads,
 	})
 }
 func (h handler) login(w http.ResponseWriter, r *http.Request) {
