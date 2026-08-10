@@ -6,16 +6,24 @@ import DataTable from 'primevue/datatable'
 import InputText from 'primevue/inputtext'
 import SelectButton from 'primevue/selectbutton'
 import ToggleSwitch from 'primevue/toggleswitch'
-import { deleteAdminItem, deleteMedia, getAdminContent, getAdminItems, getAdminOverview, getMedia, setPublication, signIn, signOut, updateAdminContent, updateAdminItem, uploadMedia, type AdminCounts, type AdminItem, type AdminResource, type MediaItem } from '@/api/admin'
+import { deleteAdminItem, getAdminContent, getAdminItems, getAdminOverview, setPublication, signIn, signOut, updateAdminContent, updateAdminItem, type AdminCounts, type AdminItem, type AdminResource } from '@/api/admin'
+import ClassForm from './ClassForm.vue'
+import NewsForm from './NewsForm.vue'
+import StaffForm from './StaffForm.vue'
+import DocumentForm from './DocumentForm.vue'
+import ReviewForm from './ReviewForm.vue'
+import GalleryManager from './GalleryManager.vue'
 
 type Item = AdminItem
 
 const sections: { label: string; value: AdminResource }[] = [
   { label: 'Занятия', value: 'classes' },
+  { label: 'Летние смены', value: 'summer-shifts' },
   { label: 'Новости', value: 'news' },
-  { label: 'Услуги', value: 'services' },
   { label: 'Сотрудники', value: 'staff' },
   { label: 'Документы', value: 'documents' },
+  { label: 'Отзывы', value: 'reviews' },
+  { label: 'Галерея', value: 'gallery' },
 ]
 const user = ref('')
 const password = ref('')
@@ -27,11 +35,14 @@ const active = ref<AdminResource>('classes')
 const counts = ref<AdminCounts | null>(null)
 const items = ref<Item[]>([])
 const query = ref('')
-const media = ref<MediaItem[]>([])
-const mediaLoading = ref(false)
-const fileInput = ref<HTMLInputElement | null>(null)
 const editingId = ref<number | null>(null)
 const contentDraft = ref('')
+const classFormId = ref<number | null | undefined>(undefined)
+const summerFormId = ref<number | null | undefined>(undefined)
+const newsFormId = ref<number | null | undefined>(undefined)
+const staffFormId = ref<number | null | undefined>(undefined)
+const documentFormId = ref<number | null | undefined>(undefined)
+const reviewFormId = ref<number | null | undefined>(undefined)
 
 const filtered = computed(() => {
   const value = query.value.trim().toLowerCase()
@@ -40,6 +51,7 @@ const filtered = computed(() => {
 })
 
 async function loadItems() {
+  if(active.value==='gallery'){items.value=[];return}
   items.value = await getAdminItems(active.value, token.value)
 }
 
@@ -61,6 +73,13 @@ async function authenticate() {
 
 async function changeSection() {
   query.value = ''
+  classFormId.value = undefined
+  summerFormId.value = undefined
+  newsFormId.value = undefined
+  staffFormId.value = undefined
+  documentFormId.value = undefined
+  reviewFormId.value = undefined
+  editingId.value = null
   loading.value = true
   try { await loadItems() } catch (reason) { error.value = reason instanceof Error ? reason.message : 'Ошибка загрузки' } finally { loading.value = false }
 }
@@ -78,17 +97,37 @@ async function toggle(item: Item, value: boolean) {
     loading.value = false
   }
 }
-async function save(item: Item) { loading.value = true; error.value = ''; try { await updateAdminItem(active.value, item, token.value); await loadItems() } catch (reason) { error.value = reason instanceof Error ? reason.message : 'Не удалось сохранить запись' } finally { loading.value = false } }
-async function editContent(item: Item) { loading.value = true; error.value = ''; try { contentDraft.value = JSON.stringify(await getAdminContent(active.value, item.id, token.value), null, 2); editingId.value = item.id } catch (reason) { error.value = reason instanceof Error ? reason.message : 'Не удалось открыть редактор' } finally { loading.value = false } }
+async function reorderClasses(event: { value: Item[] }) {
+  if (['news','gallery'].includes(active.value) || query.value.trim()) return
+  const previous = items.value.map(item => ({ ...item }))
+  const reordered = event.value.map((item, position) => ({ ...item, position }))
+  items.value = reordered
+  loading.value = true
+  error.value = ''
+  try {
+    await Promise.all(reordered.map(item => updateAdminItem(active.value, item, token.value)))
+    await loadItems()
+  } catch (reason) {
+    items.value = previous
+    error.value = reason instanceof Error ? reason.message : 'Не удалось сохранить новый порядок'
+  } finally {
+    loading.value = false
+  }
+}
+async function editContent(item: Item) { if (active.value === 'classes') { classFormId.value = item.id; return } if (active.value === 'summer-shifts') { summerFormId.value = item.id; return } if (active.value === 'news') { newsFormId.value = item.id; return } if(active.value==='staff'){staffFormId.value=item.id;return} if(active.value==='documents'){documentFormId.value=item.id;return} if(active.value==='reviews'){reviewFormId.value=item.id;return} loading.value = true; error.value = ''; try { contentDraft.value = JSON.stringify(await getAdminContent(active.value, item.id, token.value), null, 2); editingId.value = item.id } catch (reason) { error.value = reason instanceof Error ? reason.message : 'Не удалось открыть редактор' } finally { loading.value = false } }
+async function classSaved() { classFormId.value = undefined; await loadItems(); counts.value = await getAdminOverview(token.value) }
+async function summerSaved() { summerFormId.value = undefined; await loadItems(); counts.value = await getAdminOverview(token.value) }
+async function staffSaved(){staffFormId.value=undefined;await loadItems();counts.value=await getAdminOverview(token.value)}
+async function documentSaved(){documentFormId.value=undefined;await loadItems();counts.value=await getAdminOverview(token.value)}
+async function reviewSaved(){reviewFormId.value=undefined;await loadItems();counts.value=await getAdminOverview(token.value)}
+async function galleryChanged(){counts.value=await getAdminOverview(token.value)}
+async function newsSaved() { newsFormId.value = undefined; await loadItems(); counts.value = await getAdminOverview(token.value) }
 async function saveContent() { if (editingId.value === null) return; loading.value = true; error.value = ''; try { const payload = JSON.parse(contentDraft.value) as Record<string, unknown>; await updateAdminContent(active.value, editingId.value, payload, token.value); editingId.value = null; await loadItems() } catch (reason) { error.value = reason instanceof Error ? (reason instanceof SyntaxError ? 'Проверьте синтаксис JSON' : reason.message) : 'Не удалось сохранить материал' } finally { loading.value = false } }
 async function remove(item: Item) { if (!confirm(`Удалить «${item.title}» без возможности восстановления?`)) return; loading.value = true; try { await deleteAdminItem(active.value, item.id, token.value); await loadItems(); counts.value = await getAdminOverview(token.value) } catch (reason) { error.value = reason instanceof Error ? reason.message : 'Не удалось удалить запись' } finally { loading.value = false } }
 
-async function loadMedia() { mediaLoading.value = true; try { media.value = (await getMedia(token.value, query.value)).items } finally { mediaLoading.value = false } }
-async function onFile(event: Event) { const file = (event.target as HTMLInputElement).files?.[0]; if (!file) return; mediaLoading.value = true; try { await uploadMedia(token.value, file); await loadMedia() } catch (reason) { error.value = reason instanceof Error ? reason.message : 'Не удалось загрузить файл' } finally { mediaLoading.value = false; if (fileInput.value) fileInput.value.value = '' } }
-async function removeMedia(id: number) { if (!confirm('Удалить файл без возможности восстановления?')) return; try { await deleteMedia(token.value, id); await loadMedia() } catch (reason) { error.value = reason instanceof Error ? reason.message : 'Не удалось удалить файл' } }
-async function leave() { try { await signOut(token.value) } finally { sessionStorage.removeItem('admin-token'); token.value = ''; items.value = []; media.value = [] } }
+async function leave() { try { await signOut(token.value) } finally { sessionStorage.removeItem('admin-token'); token.value = ''; items.value = [] } }
 
-onMounted(() => { if (token.value) { void loadItems(); void getAdminOverview(token.value).then(v => counts.value = v).catch(() => leave()); void loadMedia() } })
+onMounted(() => { if (token.value) { void loadItems(); void getAdminOverview(token.value).then(v => counts.value = v).catch(() => leave()) } })
 </script>
 
 <template>
@@ -112,38 +151,48 @@ onMounted(() => { if (token.value) { void loadItems(); void getAdminOverview(tok
       <template v-else>
         <section class="admin-intro">
           <div><p class="eyebrow">Контент сайта</p><h1>Публикации</h1></div>
-          <p>Редактируйте названия, порядок и видимость прямо в списке. Удаление требует отдельного подтверждения.</p>
+          <p>{{ ['classes','summer-shifts'].includes(active) ? 'Основные данные меняются через форму. Видимость можно быстро переключить в списке.' : active === 'news' ? 'Содержание новости и фотографии меняются через форму. Видимость можно переключить в списке.' : 'Редактируйте названия, порядок и видимость прямо в списке. Удаление требует отдельного подтверждения.' }}</p>
         </section>
         <section v-if="counts" class="stats">
-          <article v-for="(label, key) in { classes: 'Занятия', news: 'Новости', services: 'Услуги', staff: 'Сотрудники', documents: 'Документы', gallery: 'Фото' }" :key="key">
+          <article v-for="(label, key) in { classes: 'Занятия', 'summer-shifts': 'Летние смены', news: 'Новости', staff: 'Сотрудники', documents: 'Документы', reviews:'Отзывы', gallery: 'Фото' }" :key="key">
             <strong>{{ counts[key as keyof AdminCounts] }}</strong><span>{{ label }}</span>
           </article>
         </section>
-        <section class="content-card">
+        <section class="content-card admin-navigation">
           <div class="content-toolbar">
             <SelectButton v-model="active" :options="sections" option-label="label" option-value="value" @change="changeSection" />
-            <InputText v-model="query" placeholder="Найти запись" />
+            <div v-if="active!=='gallery'" class="toolbar-actions"><InputText v-model="query" placeholder="Найти запись" /><Button v-if="active === 'classes'" label="Новое занятие" @click="classFormId = null" /><Button v-if="active === 'summer-shifts'" label="Новая смена" @click="summerFormId = null" /><Button v-if="active === 'news'" label="Новая новость" @click="newsFormId = null" /><Button v-if="active==='staff'" label="Новый сотрудник" @click="staffFormId=null"/><Button v-if="active==='documents'" label="Новый документ" @click="documentFormId=null"/><Button v-if="active==='reviews'" label="Новый отзыв" @click="reviewFormId=null"/></div>
           </div>
+        </section>
+        <section v-if="active!=='gallery'" class="content-card content-list">
+          <p v-if="active!=='news'" class="order-hint">Записи отображаются в порядке, согласно этому списку.<span v-if="query.trim()"> Очистите поиск, чтобы включить перетаскивание.</span></p>
           <small v-if="error" class="form-error">{{ error }}</small>
-          <DataTable :value="filtered" :loading="loading" striped-rows data-key="id" empty-message="Записей нет">
+          <DataTable :value="filtered" :loading="loading" striped-rows data-key="id" empty-message="Записей нет" @row-reorder="reorderClasses">
+            <Column v-if="active!=='news'" :row-reorder="!query.trim()" header="" style="width: 3rem" />
             <Column field="id" header="ID" style="width: 5rem" />
-            <Column header="Название"><template #body="{ data }"><InputText v-model="data.title" :aria-label="`Название ${data.id}`" /></template></Column>
-            <Column header="Порядок" style="width: 7rem"><template #body="{ data }"><input v-model.number="data.position" class="order-input" type="number" min="0" /></template></Column>
+            <Column header="Название"><template #body="{ data }"><strong class="item-title">{{ data.title }}</strong></template></Column>
             <Column header="Показывать" style="width: 10rem"><template #body="{ data }"><ToggleSwitch :model-value="data.isPublished" @update:model-value="toggle(data, $event)" /></template></Column>
-            <Column header="Действия" style="width: 17rem"><template #body="{ data }"><Button label="Изменить" size="small" text @click="editContent(data)" /><Button label="Сохранить" size="small" text @click="save(data)" /><Button label="Удалить" size="small" text severity="danger" @click="remove(data)" /></template></Column>
+            <Column header="Действия" style="width: 17rem"><template #body="{ data }"><Button label="Изменить" size="small" text @click="editContent(data)" /><Button label="Удалить" size="small" text severity="danger" @click="remove(data)" /></template></Column>
           </DataTable>
         </section>
+        <section v-if="active==='gallery'" class="content-card"><GalleryManager :token="token" @changed="galleryChanged"/></section>
+        <section v-if="classFormId !== undefined" class="content-card editor-card">
+          <ClassForm :key="classFormId ?? 'new'" :token="token" :id="classFormId" @saved="classSaved" @cancel="classFormId = undefined" />
+        </section>
+        <section v-if="summerFormId !== undefined" class="content-card editor-card">
+          <ClassForm :key="summerFormId ?? 'new-summer'" :token="token" :id="summerFormId" kind="summer" @saved="summerSaved" @cancel="summerFormId = undefined" />
+        </section>
+        <section v-if="newsFormId !== undefined" class="content-card editor-card">
+          <NewsForm :key="newsFormId ?? 'new'" :token="token" :id="newsFormId" @saved="newsSaved" @cancel="newsFormId = undefined" />
+        </section>
+        <section v-if="staffFormId!==undefined" class="content-card editor-card"><StaffForm :key="staffFormId??'new-staff'" :token="token" :id="staffFormId" @saved="staffSaved" @cancel="staffFormId=undefined"/></section>
+        <section v-if="documentFormId!==undefined" class="content-card editor-card"><DocumentForm :key="documentFormId??'new-document'" :token="token" :id="documentFormId" @saved="documentSaved" @cancel="documentFormId=undefined"/></section>
+        <section v-if="reviewFormId!==undefined" class="content-card editor-card"><ReviewForm :key="reviewFormId??'new-review'" :token="token" :id="reviewFormId" @saved="reviewSaved" @cancel="reviewFormId=undefined"/></section>
         <section v-if="editingId !== null" class="content-card editor-card">
           <div class="content-toolbar"><div><p class="eyebrow">Редактор материала</p><h2>Все поля записи</h2></div><Button label="Закрыть" text @click="editingId = null" /></div>
           <p class="media-hint">Можно менять текст, даты, статус публикации, порядок и привязанные <code>media_id</code>. Массивы записываются как JSON-массивы.</p>
           <textarea v-model="contentDraft" class="json-editor" spellcheck="false" aria-label="JSON редактор материала" />
           <div class="editor-actions"><Button label="Сохранить все поля" :loading="loading" @click="saveContent" /><Button label="Отмена" severity="secondary" text @click="editingId = null" /></div>
-        </section>
-        <section class="content-card media-card">
-          <div class="content-toolbar"><div><p class="eyebrow">Медиатека</p><h2>Файлы</h2></div><Button label="Загрузить файл" icon="pi pi-upload" @click="fileInput?.click()" /></div>
-          <input ref="fileInput" type="file" hidden accept="image/*,video/*,application/pdf" @change="onFile" />
-          <p class="media-hint">Перетащите файл в окно выбора или нажмите кнопку. Неиспользуемые файлы можно удалить.</p>
-          <div class="media-grid" :aria-busy="mediaLoading"><article v-for="file in media" :key="file.id"><img v-if="file.mime.startsWith('image/')" :src="file.url" :alt="file.alt" /><div v-else class="media-file">{{ file.mime }}</div><small>{{ file.alt || file.url.split('/').pop() }}</small><Button label="Удалить" severity="danger" text size="small" @click="removeMedia(file.id)" /></article></div>
         </section>
       </template>
     </main>
@@ -161,11 +210,13 @@ label { display:grid; gap:.45rem; font-weight:700; }.eyebrow { color:#e46129; fo
 .admin-intro { display:flex; justify-content:space-between; align-items:end; gap:2rem; margin-bottom:1.8rem; }.admin-intro > p { max-width:430px; margin:0; }
 .stats { display:grid; grid-template-columns:repeat(6,1fr); gap:.75rem; margin-bottom:1.8rem; }.stats article { background:#e9f3ef; border-radius:14px; padding:1rem; display:grid; gap:.2rem; }.stats strong{font-size:1.6rem}.stats span{font-size:.8rem;color:#527168}
 .content-toolbar { display:flex; justify-content:space-between; gap:1rem; margin-bottom:1.25rem; }.content-card small { display:block; margin-top:.2rem; } :deep(.p-datatable td small) { display:block; color:#6f766e; margin-top:.25rem; }
-.media-card { margin-top:1.8rem }.media-card h2 { margin:0 }.media-hint { color:#647067 }.media-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:1rem }.media-grid article { border:1px solid #e6e2d9; padding:.65rem; border-radius:12px; overflow:hidden; display:grid; gap:.45rem }.media-grid img,.media-file { width:100%; height:100px; object-fit:cover; background:#e9f3ef; border-radius:8px }.media-file { display:grid; place-items:center; padding:.5rem; text-align:center; font-size:.72rem }
+.admin-navigation{margin-bottom:1rem}.admin-navigation .content-toolbar{margin-bottom:0}.content-list{padding-top:1.5rem}
+.toolbar-actions { display:flex; gap:.75rem; align-items:center }.toolbar-actions :deep(.p-inputtext) { min-width:13rem }
+.order-hint { margin:0 0 1.25rem; padding:.85rem 1rem; border-radius:10px; background:#f1f6f3; color:#527168; line-height:1.45 }.item-title { font-weight:700 }
 .order-input { width:100%; padding:.55rem; border:1px solid #d9d4ca; border-radius:6px; color:#173d35 }
 .editor-card { margin-top:1.8rem }.editor-card h2 { margin:0 }.json-editor { width:100%; min-height:28rem; font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; padding:1rem; border:1px solid #d9d4ca; border-radius:10px; resize:vertical; box-sizing:border-box; color:#173d35 }.editor-actions { display:flex; gap:.5rem; margin-top:1rem }
 :deep(.p-inputtext) { width:100%; background:#fff; color:#173d35; border-color:#d9d4ca; }
 :deep(.p-inputtext:hover), :deep(.p-inputtext:enabled:focus) { border-color:#1a6757; }
 :deep(.p-inputtext::placeholder) { color:#7b857e; }
-@media(max-width:760px){.admin-intro,.content-toolbar{align-items:stretch;flex-direction:column}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.admin-intro,.content-toolbar,.toolbar-actions{align-items:stretch;flex-direction:column}.stats{grid-template-columns:repeat(2,1fr)}}
 </style>

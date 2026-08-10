@@ -13,6 +13,7 @@ import type {
   NewsPost,
   SpecialOffer,
   StaffMember,
+  Review,
 } from '@/data/types'
 
 const BASE = '/api'
@@ -42,6 +43,8 @@ export const getNewsPost = (id: Id) => get<NewsPost>(`/news/${id}`)
 // Занятия
 export const getClasses = () => get<ClassItem[]>('/classes')
 export const getClass = (id: Id) => get<ClassItem>(`/classes/${id}`)
+export const getSummerShifts = () => get<ClassItem[]>('/summer-shifts')
+export const getSummerShift = (id: Id) => get<ClassItem>(`/summer-shifts/${id}`)
 
 // Услуги
 export const getServices = () => get<SpecialOffer[]>('/services')
@@ -51,3 +54,4 @@ export const getService = (id: Id) => get<SpecialOffer>(`/services/${id}`)
 export const getStaff = () => get<StaffMember[]>('/staff')
 export const getDocuments = () => get<DocumentItem[]>('/documents')
 export const getGallery = () => get<GalleryItem[]>('/gallery')
+export const getReviews = () => get<Review[]>('/reviews')

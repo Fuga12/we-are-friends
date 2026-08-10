@@ -81,6 +81,7 @@ const routes: RouteRecordRaw[] = [
     component: SummerView,
     meta: { title: 'Летние каникулы' },
   },
+  { path: '/special/summer/:id', name: 'summer-shift-detail', component: ClassDetailView, meta: { title: 'Летняя смена' } },
 
   // Страница 404 — ловит все несуществующие адреса
   {

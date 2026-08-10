@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import PageHero from '@/components/layout/PageHero.vue'
 import ReviewCard from '@/components/cards/ReviewCard.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
-import { reviews } from '@/data/reviews'
+import { useAsync } from '@/composables/useAsync'
+import { getReviews } from '@/api'
 import { site } from '@/data/site'
+const {data,loading,error}=useAsync(getReviews)
+const reviews=computed(()=>data.value??[])
 </script>
 
 <template>
@@ -16,6 +20,8 @@ import { site } from '@/data/site'
 
   <section class="section">
     <div class="container">
+      <p v-if="loading" class="text-muted text-center">Загрузка…</p>
+      <p v-else-if="error" class="text-muted text-center">Не удалось загрузить отзывы. Обновите страницу.</p>
       <div class="grid" style="--min: 320px">
         <ReviewCard v-for="review in reviews" :key="review.id" :review="review" />
       </div>

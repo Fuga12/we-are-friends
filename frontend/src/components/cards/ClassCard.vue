@@ -4,12 +4,12 @@ import { useAccent } from '@/composables/useAccent'
 import PhotoFrame from '@/components/ui/PhotoFrame.vue'
 import type { ClassItem } from '@/data/types'
 
-const props = defineProps<{ item: ClassItem }>()
+const props = withDefaults(defineProps<{ item: ClassItem; basePath?: string }>(), { basePath: '/classes' })
 const accentStyle = useAccent(toRef(() => props.item.color))
 </script>
 
 <template>
-  <RouterLink class="class-card" :to="`/classes/${item.id}`" :style="accentStyle">
+  <RouterLink class="class-card" :to="`${basePath}/${item.id}`" :style="accentStyle">
     <!-- Область под фото занятия. Пока заглушка с эмодзи; когда появится
          реальное фото, передай в PhotoFrame :src="item.photo". -->
     <div class="class-card__media">

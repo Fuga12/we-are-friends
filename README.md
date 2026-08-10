@@ -1,25 +1,58 @@
-# we-are-friends
+# Мы Друзья
 
-Сайт детского центра «Мы Друзья».
+Сайт детского центра: Vue, Go, PostgreSQL и MinIO.
 
-- [`frontend/`](frontend) — Vue-клиент.
-- [`backend-stub/`](backend-stub) — самостоятельная Litestar-заглушка для разработки.
-- [`backend-go/`](backend-go) — основной Go API на PostgreSQL и MinIO.
-- [`curent_data/`](curent_data) — актуальная исходная выгрузка контента.
+## Запуск
 
-## Запуск в Docker
+Нужны Docker и Docker Compose.
 
-1. Скопируйте `.env.example` в `.env` и задайте секреты: `ADMIN_PASSWORD`,
-   `POSTGRES_PASSWORD` и `MINIO_ROOT_PASSWORD`.
-2. Запустите инфраструктуру и приложение: `docker-compose up --build -d`.
+```bash
+cp .env.example .env
+```
 
-Сайт, включая `/admin`, доступен на `http://localhost:8088`. Nginx раздаёт
-собранный Vue-клиент, проксирует `/api` в Go и `/media` в MinIO, а также
-возвращает `index.html` для всех клиентских маршрутов. Vite не запускается как
-сервер и не участвует в маршрутизации: он остаётся только одноразовым
-компилятором `.vue`-файлов перед сборкой Docker-образа.
+Заполните в `.env` три пароля:
 
-Go API выбирает кодовый профиль через `APP_ENV`: `development` используется
-по умолчанию при локальном запуске, `production` задаётся в Compose. Все
-несекретные адреса, порты и имена ресурсов находятся в этих профилях и при
-необходимости переопределяются одноимёнными переменными окружения.
+```env
+POSTGRES_PASSWORD=сложный-пароль
+MINIO_ROOT_PASSWORD=сложный-пароль
+ADMIN_PASSWORD=пароль-админки
+```
+
+Запустите сайт:
+
+```bash
+docker-compose up -d --build
+```
+
+- Сайт: `http://localhost:8088`
+- Админка: `http://localhost:8088/admin`
+- Логин админки: `admin`
+
+## Выкладка на сервер
+
+```bash
+git clone <адрес-репозитория> we-are-friends
+cd we-are-friends
+cp .env.example .env
+nano .env
+docker-compose up -d --build
+```
+
+Направьте домен через Nginx или другой reverse proxy на `127.0.0.1:8088`.
+
+## Обновление
+
+```bash
+git pull
+docker-compose up -d --build
+```
+
+## Полезные команды
+
+```bash
+docker-compose ps
+docker-compose logs -f
+docker-compose down
+```
+
+Данные хранятся в папке `data/`. Не удаляйте её и добавьте в резервное копирование.

@@ -43,6 +43,98 @@ type contentUpdateRequest struct {
 	IsPublished bool   `json:"isPublished"`
 	Position    int    `json:"position"`
 }
+type adminClassDTO struct {
+	ID              int64      `json:"id,omitempty"`
+	Title           string     `json:"title"`
+	AgeRange        string     `json:"ageRange"`
+	Description     string     `json:"description"`
+	Schedule        string     `json:"schedule"`
+	Price           string     `json:"price"`
+	Emoji           string     `json:"emoji"`
+	Color           string     `json:"color"`
+	CoverMediaID    *int64     `json:"coverMediaId"`
+	PhotoMediaIDs   []int64    `json:"photoMediaIds"`
+	FullDescription []string   `json:"fullDescription"`
+	Highlights      []string   `json:"highlights"`
+	Position        int        `json:"position"`
+	IsPublished     bool       `json:"isPublished"`
+	CoverMedia      *mediaDTO  `json:"coverMedia,omitempty"`
+	PhotoMedia      []mediaDTO `json:"photoMedia"`
+}
+type adminNewsDTO struct {
+	ID            int64      `json:"id,omitempty"`
+	Title         string     `json:"title"`
+	Date          string     `json:"date"`
+	Category      string     `json:"category"`
+	Excerpt       string     `json:"excerpt"`
+	Emoji         string     `json:"emoji"`
+	CoverMediaID  *int64     `json:"coverMediaId"`
+	PhotoMediaIDs []int64    `json:"photoMediaIds"`
+	Content       []string   `json:"content"`
+	IsPublished   bool       `json:"isPublished"`
+	CoverMedia    *mediaDTO  `json:"coverMedia,omitempty"`
+	PhotoMedia    []mediaDTO `json:"photoMedia"`
+}
+type adminServiceDTO struct {
+	ID            int64      `json:"id,omitempty"`
+	Title         string     `json:"title"`
+	Tagline       string     `json:"tagline"`
+	Description   string     `json:"description"`
+	Features      []string   `json:"features"`
+	Price         string     `json:"price"`
+	Emoji         string     `json:"emoji"`
+	Path          string     `json:"to"`
+	Color         string     `json:"color"`
+	CoverMediaID  *int64     `json:"coverMediaId"`
+	PhotoMediaIDs []int64    `json:"photoMediaIds"`
+	Position      int        `json:"position"`
+	IsPublished   bool       `json:"isPublished"`
+	CoverMedia    *mediaDTO  `json:"coverMedia,omitempty"`
+	PhotoMedia    []mediaDTO `json:"photoMedia"`
+}
+type adminStaffDTO struct {
+	ID           int64     `json:"id,omitempty"`
+	Name         string    `json:"name"`
+	Role         string    `json:"role"`
+	Bio          string    `json:"bio"`
+	Initials     string    `json:"initials"`
+	Color        string    `json:"color"`
+	PhotoMediaID *int64    `json:"photoMediaId"`
+	Position     int       `json:"position"`
+	IsPublished  bool      `json:"isPublished"`
+	PhotoMedia   *mediaDTO `json:"photoMedia,omitempty"`
+}
+type adminDocumentDTO struct {
+	ID              int64     `json:"id,omitempty"`
+	Title           string    `json:"title"`
+	Description     string    `json:"description"`
+	FileMediaID     int64     `json:"fileMediaId"`
+	DisplayFileType string    `json:"displayFileType"`
+	DisplayFileSize string    `json:"displayFileSize"`
+	Position        int       `json:"position"`
+	IsPublished     bool      `json:"isPublished"`
+	FileMedia       *mediaDTO `json:"fileMedia,omitempty"`
+}
+type adminReviewDTO struct {
+	ID          int64  `json:"id,omitempty"`
+	Author      string `json:"author"`
+	Role        string `json:"role"`
+	Text        string `json:"text"`
+	Rating      int16  `json:"rating"`
+	Position    int    `json:"position"`
+	IsPublished bool   `json:"isPublished"`
+}
+type adminGalleryDTO struct {
+	ID       int64    `json:"id"`
+	MediaID  int64    `json:"mediaId"`
+	Title    string   `json:"title"`
+	Position int      `json:"position"`
+	Media    mediaDTO `json:"media"`
+}
+type addGalleryRequest struct {
+	MediaID int64  `json:"mediaId"`
+	Title   string `json:"title"`
+}
 
 type classDTO struct {
 	ID              int64    `json:"id"`
@@ -165,6 +257,36 @@ func (h handler) classDTO(ctx context.Context, v store.Class) (classDTO, error) 
 		return classDTO{}, err
 	}
 	return classDTO{v.ID, v.Title, v.AgeRange, v.Description, v.Schedule, v.Price, v.Emoji, v.Color, photo, photos, v.FullDescription, v.Highlights}, nil
+}
+func (h handler) summerShifts(w http.ResponseWriter, r *http.Request) {
+	values, err := h.store.SummerShifts(r.Context())
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	out := make([]classDTO, 0, len(values))
+	for _, v := range values {
+		dto, dtoErr := h.classDTO(r.Context(), v)
+		if dtoErr != nil {
+			h.failure(w, dtoErr)
+			return
+		}
+		out = append(out, dto)
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+func (h handler) summerShift(w http.ResponseWriter, r *http.Request) {
+	v, err := h.store.SummerShift(r.Context(), pathID(r))
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	dto, err := h.classDTO(r.Context(), v)
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, dto)
 }
 
 func (h handler) news(w http.ResponseWriter, r *http.Request) {
@@ -338,8 +460,9 @@ func (h handler) adminOverview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]int64{
-		"classes": counts.Classes, "news": counts.News, "services": counts.Services,
+		"classes": counts.Classes, "summer-shifts": counts.SummerShifts, "news": counts.News, "services": counts.Services,
 		"staff": counts.Staff, "documents": counts.Documents, "gallery": counts.Gallery,
+		"reviews": counts.Reviews,
 	})
 }
 func (h handler) login(w http.ResponseWriter, r *http.Request) {
@@ -477,6 +600,647 @@ func (h handler) adminItems(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, items)
 }
 
+func (h handler) adminClassForm(w http.ResponseWriter, r *http.Request) {
+	item, err := h.store.AdminClass(r.Context(), pathID(r))
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	ids := append([]int64{}, item.PhotoMediaIDs...)
+	if item.CoverMediaID != nil {
+		ids = append([]int64{*item.CoverMediaID}, ids...)
+	}
+	mediaItems, err := h.store.MediaByIDs(r.Context(), ids)
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	mediaByID := make(map[int64]mediaDTO, len(mediaItems))
+	for _, mediaItem := range mediaItems {
+		url, urlErr := h.media.URL(r.Context(), mediaItem.ObjectKey)
+		if urlErr != nil {
+			h.failure(w, urlErr)
+			return
+		}
+		mediaByID[mediaItem.ID] = mediaDTO{ID: mediaItem.ID, URL: url, MIME: mediaItem.MIME, SizeBytes: mediaItem.SizeBytes, Alt: mediaItem.Alt}
+	}
+	output := adminClassDTO{ID: item.ID, Title: item.Title, AgeRange: item.AgeRange, Description: item.Description, Schedule: item.Schedule,
+		Price: item.Price, Emoji: item.Emoji, Color: item.Color, CoverMediaID: item.CoverMediaID, PhotoMediaIDs: item.PhotoMediaIDs,
+		FullDescription: item.FullDescription, Highlights: item.Highlights, Position: item.Position, IsPublished: item.IsPublished, PhotoMedia: []mediaDTO{}}
+	if item.CoverMediaID != nil {
+		if cover, ok := mediaByID[*item.CoverMediaID]; ok {
+			output.CoverMedia = &cover
+		}
+	}
+	for _, id := range item.PhotoMediaIDs {
+		if photo, ok := mediaByID[id]; ok {
+			output.PhotoMedia = append(output.PhotoMedia, photo)
+		}
+	}
+	writeJSON(w, http.StatusOK, output)
+}
+
+func (h handler) adminSummerShiftForm(w http.ResponseWriter, r *http.Request) {
+	item, err := h.store.AdminSummerShift(r.Context(), pathID(r))
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	ids := append([]int64{}, item.PhotoMediaIDs...)
+	if item.CoverMediaID != nil {
+		ids = append([]int64{*item.CoverMediaID}, ids...)
+	}
+	mediaItems, err := h.store.MediaByIDs(r.Context(), ids)
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	mediaByID := make(map[int64]mediaDTO, len(mediaItems))
+	for _, mediaItem := range mediaItems {
+		url, urlErr := h.media.URL(r.Context(), mediaItem.ObjectKey)
+		if urlErr != nil {
+			h.failure(w, urlErr)
+			return
+		}
+		mediaByID[mediaItem.ID] = mediaDTO{ID: mediaItem.ID, URL: url, MIME: mediaItem.MIME, SizeBytes: mediaItem.SizeBytes, Alt: mediaItem.Alt}
+	}
+	output := adminClassDTO{ID: item.ID, Title: item.Title, AgeRange: item.AgeRange, Description: item.Description, Schedule: item.Schedule, Price: item.Price, Emoji: item.Emoji, Color: item.Color, CoverMediaID: item.CoverMediaID, PhotoMediaIDs: item.PhotoMediaIDs, FullDescription: item.FullDescription, Highlights: item.Highlights, Position: item.Position, IsPublished: item.IsPublished, PhotoMedia: []mediaDTO{}}
+	if item.CoverMediaID != nil {
+		if cover, ok := mediaByID[*item.CoverMediaID]; ok {
+			output.CoverMedia = &cover
+		}
+	}
+	for _, id := range item.PhotoMediaIDs {
+		if photo, ok := mediaByID[id]; ok {
+			output.PhotoMedia = append(output.PhotoMedia, photo)
+		}
+	}
+	writeJSON(w, http.StatusOK, output)
+}
+
+func (h handler) deleteAdminClassMedia(w http.ResponseWriter, r *http.Request) {
+	storage, ok := h.media.(mediaStorage)
+	if !ok {
+		h.failure(w, errors.New("media storage does not support deletion"))
+		return
+	}
+	classID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil || classID < 1 {
+		h.failure(w, store.ErrNotFound)
+		return
+	}
+	mediaID, err := strconv.ParseInt(chi.URLParam(r, "mediaId"), 10, 64)
+	if err != nil || mediaID < 1 {
+		h.failure(w, store.ErrNotFound)
+		return
+	}
+	key, err := h.store.DeleteClassMedia(r.Context(), classID, mediaID)
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	if err := storage.Delete(r.Context(), key); err != nil {
+		h.failure(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+func (h handler) deleteAdminSummerShiftMedia(w http.ResponseWriter, r *http.Request) {
+	storage, ok := h.media.(mediaStorage)
+	if !ok {
+		h.failure(w, errors.New("media storage does not support deletion"))
+		return
+	}
+	shiftID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil || shiftID < 1 {
+		h.failure(w, store.ErrNotFound)
+		return
+	}
+	mediaID, err := strconv.ParseInt(chi.URLParam(r, "mediaId"), 10, 64)
+	if err != nil || mediaID < 1 {
+		h.failure(w, store.ErrNotFound)
+		return
+	}
+	key, err := h.store.DeleteSummerShiftMedia(r.Context(), shiftID, mediaID)
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	if err := storage.Delete(r.Context(), key); err != nil {
+		h.failure(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h handler) adminNewsForm(w http.ResponseWriter, r *http.Request) {
+	item, err := h.store.AdminNews(r.Context(), pathID(r))
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	ids := append([]int64{}, item.PhotoMediaIDs...)
+	if item.CoverMediaID != nil {
+		ids = append([]int64{*item.CoverMediaID}, ids...)
+	}
+	mediaItems, err := h.store.MediaByIDs(r.Context(), ids)
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	mediaByID := make(map[int64]mediaDTO, len(mediaItems))
+	for _, mediaItem := range mediaItems {
+		url, urlErr := h.media.URL(r.Context(), mediaItem.ObjectKey)
+		if urlErr != nil {
+			h.failure(w, urlErr)
+			return
+		}
+		mediaByID[mediaItem.ID] = mediaDTO{ID: mediaItem.ID, URL: url, MIME: mediaItem.MIME, SizeBytes: mediaItem.SizeBytes, Alt: mediaItem.Alt}
+	}
+	output := adminNewsDTO{ID: item.ID, Title: item.Title, Date: item.Date, Category: item.Category, Excerpt: item.Excerpt, Emoji: item.Emoji, CoverMediaID: item.CoverMediaID, PhotoMediaIDs: item.PhotoMediaIDs, Content: item.Content, IsPublished: item.IsPublished, PhotoMedia: []mediaDTO{}}
+	if item.CoverMediaID != nil {
+		if cover, ok := mediaByID[*item.CoverMediaID]; ok {
+			output.CoverMedia = &cover
+		}
+	}
+	for _, id := range item.PhotoMediaIDs {
+		if photo, ok := mediaByID[id]; ok {
+			output.PhotoMedia = append(output.PhotoMedia, photo)
+		}
+	}
+	writeJSON(w, http.StatusOK, output)
+}
+
+func (h handler) adminNewsCategories(w http.ResponseWriter, r *http.Request) {
+	categories, err := h.store.NewsCategories(r.Context())
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, categories)
+}
+
+func (h handler) saveAdminNews(w http.ResponseWriter, r *http.Request) {
+	var input adminNewsDTO
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		h.validationFailure(w, "form", "Не удалось прочитать данные формы")
+		return
+	}
+	if chi.URLParam(r, "id") != "" {
+		input.ID = pathID(r)
+	}
+	input.Title = strings.TrimSpace(input.Title)
+	input.Category = strings.TrimSpace(input.Category)
+	input.Excerpt = strings.TrimSpace(input.Excerpt)
+	if input.Title == "" {
+		h.validationFailure(w, "title", "Укажите заголовок новости")
+		return
+	}
+	if _, err := time.Parse("2006-01-02", input.Date); err != nil {
+		h.validationFailure(w, "date", "Укажите дату публикации")
+		return
+	}
+	if input.Category == "" {
+		h.validationFailure(w, "category", "Укажите рубрику")
+		return
+	}
+	if input.Excerpt == "" {
+		h.validationFailure(w, "excerpt", "Добавьте краткий анонс")
+		return
+	}
+	id, err := h.store.SaveAdminNews(r.Context(), store.AdminNews{ID: input.ID, Title: input.Title, Date: input.Date, Category: input.Category, Excerpt: input.Excerpt, Emoji: strings.TrimSpace(input.Emoji), CoverMediaID: input.CoverMediaID, PhotoMediaIDs: input.PhotoMediaIDs, Content: input.Content, IsPublished: input.IsPublished})
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	status := http.StatusOK
+	if input.ID == 0 {
+		status = http.StatusCreated
+	}
+	writeJSON(w, status, map[string]int64{"id": id})
+}
+
+func (h handler) deleteAdminNewsMedia(w http.ResponseWriter, r *http.Request) {
+	storage, ok := h.media.(mediaStorage)
+	if !ok {
+		h.failure(w, errors.New("media storage does not support deletion"))
+		return
+	}
+	newsID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil || newsID < 1 {
+		h.failure(w, store.ErrNotFound)
+		return
+	}
+	mediaID, err := strconv.ParseInt(chi.URLParam(r, "mediaId"), 10, 64)
+	if err != nil || mediaID < 1 {
+		h.failure(w, store.ErrNotFound)
+		return
+	}
+	key, err := h.store.DeleteNewsMedia(r.Context(), newsID, mediaID)
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	if err := storage.Delete(r.Context(), key); err != nil {
+		h.failure(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h handler) adminServiceForm(w http.ResponseWriter, r *http.Request) {
+	item, err := h.store.AdminService(r.Context(), pathID(r))
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	ids := append([]int64{}, item.PhotoMediaIDs...)
+	if item.CoverMediaID != nil {
+		ids = append([]int64{*item.CoverMediaID}, ids...)
+	}
+	mediaItems, err := h.store.MediaByIDs(r.Context(), ids)
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	byID := map[int64]mediaDTO{}
+	for _, m := range mediaItems {
+		url, urlErr := h.media.URL(r.Context(), m.ObjectKey)
+		if urlErr != nil {
+			h.failure(w, urlErr)
+			return
+		}
+		byID[m.ID] = mediaDTO{ID: m.ID, URL: url, MIME: m.MIME, SizeBytes: m.SizeBytes, Alt: m.Alt}
+	}
+	out := adminServiceDTO{ID: item.ID, Title: item.Title, Tagline: item.Tagline, Description: item.Description, Features: item.Features, Price: item.Price, Emoji: item.Emoji, Path: item.Path, Color: item.Color, CoverMediaID: item.CoverMediaID, PhotoMediaIDs: item.PhotoMediaIDs, Position: item.Position, IsPublished: item.IsPublished, PhotoMedia: []mediaDTO{}}
+	if item.CoverMediaID != nil {
+		if cover, ok := byID[*item.CoverMediaID]; ok {
+			out.CoverMedia = &cover
+		}
+	}
+	for _, id := range item.PhotoMediaIDs {
+		if photo, ok := byID[id]; ok {
+			out.PhotoMedia = append(out.PhotoMedia, photo)
+		}
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+func (h handler) saveAdminService(w http.ResponseWriter, r *http.Request) {
+	var input adminServiceDTO
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		h.validationFailure(w, "form", "Не удалось прочитать данные формы")
+		return
+	}
+	if chi.URLParam(r, "id") != "" {
+		input.ID = pathID(r)
+	}
+	input.Title = strings.TrimSpace(input.Title)
+	input.Tagline = strings.TrimSpace(input.Tagline)
+	input.Description = strings.TrimSpace(input.Description)
+	input.Path = strings.TrimSpace(input.Path)
+	if input.Title == "" || input.Tagline == "" || input.Description == "" {
+		h.validationFailure(w, "form", "Заполните название, подзаголовок и описание")
+		return
+	}
+	if !strings.HasPrefix(input.Path, "/special/") {
+		h.validationFailure(w, "to", "Адрес должен начинаться с /special/")
+		return
+	}
+	if len(input.Color) != 7 || input.Color[0] != '#' {
+		h.validationFailure(w, "color", "Укажите цвет в формате #1a6757")
+		return
+	}
+	id, err := h.store.SaveAdminService(r.Context(), store.AdminService{ID: input.ID, Title: input.Title, Tagline: input.Tagline, Description: input.Description, Features: input.Features, Price: strings.TrimSpace(input.Price), Emoji: strings.TrimSpace(input.Emoji), Path: input.Path, Color: input.Color, CoverMediaID: input.CoverMediaID, PhotoMediaIDs: input.PhotoMediaIDs, Position: input.Position, IsPublished: input.IsPublished})
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	status := http.StatusOK
+	if input.ID == 0 {
+		status = http.StatusCreated
+	}
+	writeJSON(w, status, map[string]int64{"id": id})
+}
+func (h handler) deleteAdminServiceMedia(w http.ResponseWriter, r *http.Request) {
+	storage, ok := h.media.(mediaStorage)
+	if !ok {
+		h.failure(w, errors.New("media storage does not support deletion"))
+		return
+	}
+	serviceID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil || serviceID < 1 {
+		h.failure(w, store.ErrNotFound)
+		return
+	}
+	mediaID, err := strconv.ParseInt(chi.URLParam(r, "mediaId"), 10, 64)
+	if err != nil || mediaID < 1 {
+		h.failure(w, store.ErrNotFound)
+		return
+	}
+	key, err := h.store.DeleteServiceMedia(r.Context(), serviceID, mediaID)
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	if err := storage.Delete(r.Context(), key); err != nil {
+		h.failure(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h handler) saveAdminClass(w http.ResponseWriter, r *http.Request) {
+	var input adminClassDTO
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		h.validationFailure(w, "form", "Не удалось прочитать данные формы")
+		return
+	}
+	if id := chi.URLParam(r, "id"); id != "" {
+		input.ID = pathID(r)
+	}
+	input.Title = strings.TrimSpace(input.Title)
+	if input.Title == "" {
+		h.validationFailure(w, "title", "Укажите название занятия")
+		return
+	}
+	if strings.TrimSpace(input.AgeRange) == "" {
+		h.validationFailure(w, "ageRange", "Укажите возраст")
+		return
+	}
+	if strings.TrimSpace(input.Description) == "" {
+		h.validationFailure(w, "description", "Добавьте краткое описание")
+		return
+	}
+	if input.Position < 0 {
+		h.validationFailure(w, "position", "Порядок не может быть отрицательным")
+		return
+	}
+	if len(input.Color) != 7 || input.Color[0] != '#' {
+		h.validationFailure(w, "color", "Укажите цвет в формате #1a6757")
+		return
+	}
+	item := store.AdminClass{ID: input.ID, Title: input.Title, AgeRange: strings.TrimSpace(input.AgeRange), Description: strings.TrimSpace(input.Description),
+		Schedule: strings.TrimSpace(input.Schedule), Price: strings.TrimSpace(input.Price), Emoji: strings.TrimSpace(input.Emoji), Color: input.Color,
+		CoverMediaID: input.CoverMediaID, PhotoMediaIDs: input.PhotoMediaIDs, FullDescription: input.FullDescription, Highlights: input.Highlights,
+		Position: input.Position, IsPublished: input.IsPublished}
+	id, err := h.store.SaveAdminClass(r.Context(), item)
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	writeJSON(w, map[bool]int{true: http.StatusCreated, false: http.StatusOK}[input.ID == 0], map[string]int64{"id": id})
+}
+
+func (h handler) saveAdminSummerShift(w http.ResponseWriter, r *http.Request) {
+	var input adminClassDTO
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		h.validationFailure(w, "form", "Не удалось прочитать данные формы")
+		return
+	}
+	if id := chi.URLParam(r, "id"); id != "" {
+		input.ID = pathID(r)
+	}
+	input.Title = strings.TrimSpace(input.Title)
+	if input.Title == "" {
+		h.validationFailure(w, "title", "Укажите название смены")
+		return
+	}
+	if strings.TrimSpace(input.AgeRange) == "" {
+		h.validationFailure(w, "ageRange", "Укажите возраст")
+		return
+	}
+	if strings.TrimSpace(input.Description) == "" {
+		h.validationFailure(w, "description", "Добавьте краткое описание")
+		return
+	}
+	if input.Position < 0 {
+		h.validationFailure(w, "position", "Порядок не может быть отрицательным")
+		return
+	}
+	if len(input.Color) != 7 || input.Color[0] != '#' {
+		h.validationFailure(w, "color", "Укажите цвет в формате #1a6757")
+		return
+	}
+	item := store.AdminSummerShift{ID: input.ID, Title: input.Title, AgeRange: strings.TrimSpace(input.AgeRange), Description: strings.TrimSpace(input.Description), Schedule: strings.TrimSpace(input.Schedule), Price: strings.TrimSpace(input.Price), Emoji: strings.TrimSpace(input.Emoji), Color: input.Color, CoverMediaID: input.CoverMediaID, PhotoMediaIDs: input.PhotoMediaIDs, FullDescription: input.FullDescription, Highlights: input.Highlights, Position: input.Position, IsPublished: input.IsPublished}
+	id, err := h.store.SaveAdminSummerShift(r.Context(), item)
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	writeJSON(w, map[bool]int{true: http.StatusCreated, false: http.StatusOK}[input.ID == 0], map[string]int64{"id": id})
+}
+
+func (h handler) mediaDTOByID(ctx context.Context, id int64) (*mediaDTO, error) {
+	items, err := h.store.MediaByIDs(ctx, []int64{id})
+	if err != nil {
+		return nil, err
+	}
+	if len(items) == 0 {
+		return nil, store.ErrNotFound
+	}
+	url, err := h.media.URL(ctx, items[0].ObjectKey)
+	if err != nil {
+		return nil, err
+	}
+	return &mediaDTO{ID: items[0].ID, URL: url, MIME: items[0].MIME, SizeBytes: items[0].SizeBytes, Alt: items[0].Alt}, nil
+}
+func (h handler) adminStaffForm(w http.ResponseWriter, r *http.Request) {
+	item, err := h.store.AdminStaff(r.Context(), pathID(r))
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	out := adminStaffDTO{ID: item.ID, Name: item.Name, Role: item.Role, Bio: item.Bio, Initials: item.Initials, Color: item.Color, PhotoMediaID: item.PhotoMediaID, Position: item.Position, IsPublished: item.IsPublished}
+	if item.PhotoMediaID != nil {
+		out.PhotoMedia, err = h.mediaDTOByID(r.Context(), *item.PhotoMediaID)
+		if err != nil {
+			h.failure(w, err)
+			return
+		}
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+func (h handler) saveAdminStaff(w http.ResponseWriter, r *http.Request) {
+	var input adminStaffDTO
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		h.validationFailure(w, "form", "Не удалось прочитать данные формы")
+		return
+	}
+	if chi.URLParam(r, "id") != "" {
+		input.ID = pathID(r)
+	}
+	input.Name = strings.TrimSpace(input.Name)
+	input.Role = strings.TrimSpace(input.Role)
+	input.Bio = strings.TrimSpace(input.Bio)
+	input.Initials = strings.TrimSpace(input.Initials)
+	if input.Name == "" || input.Role == "" {
+		h.validationFailure(w, "name", "Укажите имя и должность")
+		return
+	}
+	if len(input.Color) != 7 || input.Color[0] != '#' {
+		h.validationFailure(w, "color", "Укажите цвет в формате #1a6757")
+		return
+	}
+	id, err := h.store.SaveAdminStaff(r.Context(), store.AdminStaff{ID: input.ID, Name: input.Name, Role: input.Role, Bio: input.Bio, Initials: input.Initials, Color: input.Color, PhotoMediaID: input.PhotoMediaID, Position: input.Position, IsPublished: input.IsPublished})
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	writeJSON(w, map[bool]int{true: http.StatusCreated, false: http.StatusOK}[input.ID == 0], map[string]int64{"id": id})
+}
+func (h handler) deleteAdminStaffMedia(w http.ResponseWriter, r *http.Request) {
+	storage, ok := h.media.(mediaStorage)
+	if !ok {
+		h.failure(w, errors.New("media storage does not support deletion"))
+		return
+	}
+	staffID := pathID(r)
+	mediaID, err := strconv.ParseInt(chi.URLParam(r, "mediaId"), 10, 64)
+	if err != nil {
+		h.failure(w, store.ErrNotFound)
+		return
+	}
+	key, err := h.store.DeleteStaffMedia(r.Context(), staffID, mediaID)
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	if err = storage.Delete(r.Context(), key); err != nil {
+		h.failure(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+func (h handler) adminDocumentForm(w http.ResponseWriter, r *http.Request) {
+	item, err := h.store.AdminDocument(r.Context(), pathID(r))
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	file, err := h.mediaDTOByID(r.Context(), item.FileMediaID)
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	out := adminDocumentDTO{ID: item.ID, Title: item.Title, Description: item.Description, FileMediaID: item.FileMediaID, Position: item.Position, IsPublished: item.IsPublished, FileMedia: file}
+	if item.DisplayFileType != nil {
+		out.DisplayFileType = *item.DisplayFileType
+	}
+	if item.DisplayFileSize != nil {
+		out.DisplayFileSize = *item.DisplayFileSize
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+func (h handler) saveAdminDocument(w http.ResponseWriter, r *http.Request) {
+	var input adminDocumentDTO
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		h.validationFailure(w, "form", "Не удалось прочитать данные формы")
+		return
+	}
+	if chi.URLParam(r, "id") != "" {
+		input.ID = pathID(r)
+	}
+	input.Title = strings.TrimSpace(input.Title)
+	if input.Title == "" || input.FileMediaID < 1 {
+		h.validationFailure(w, "file", "Укажите название и загрузите файл")
+		return
+	}
+	var fileType, fileSize *string
+	if value := strings.TrimSpace(input.DisplayFileType); value != "" {
+		fileType = &value
+	}
+	if value := strings.TrimSpace(input.DisplayFileSize); value != "" {
+		fileSize = &value
+	}
+	id, err := h.store.SaveAdminDocument(r.Context(), store.AdminDocument{ID: input.ID, Title: input.Title, Description: strings.TrimSpace(input.Description), FileMediaID: input.FileMediaID, DisplayFileType: fileType, DisplayFileSize: fileSize, Position: input.Position, IsPublished: input.IsPublished})
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	writeJSON(w, map[bool]int{true: http.StatusCreated, false: http.StatusOK}[input.ID == 0], map[string]int64{"id": id})
+}
+func (h handler) adminReviewForm(w http.ResponseWriter, r *http.Request) {
+	item, err := h.store.AdminReview(r.Context(), pathID(r))
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, adminReviewDTO{ID: item.ID, Author: item.Author, Role: item.Role, Text: item.Text, Rating: item.Rating, Position: item.Position, IsPublished: item.IsPublished})
+}
+func (h handler) saveAdminReview(w http.ResponseWriter, r *http.Request) {
+	var input adminReviewDTO
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		h.validationFailure(w, "form", "Не удалось прочитать данные формы")
+		return
+	}
+	if chi.URLParam(r, "id") != "" {
+		input.ID = pathID(r)
+	}
+	input.Author = strings.TrimSpace(input.Author)
+	input.Text = strings.TrimSpace(input.Text)
+	if input.Author == "" || input.Text == "" {
+		h.validationFailure(w, "author", "Укажите автора и текст отзыва")
+		return
+	}
+	if input.Rating < 1 || input.Rating > 5 {
+		h.validationFailure(w, "rating", "Оценка должна быть от 1 до 5")
+		return
+	}
+	id, err := h.store.SaveAdminReview(r.Context(), store.AdminReview{ID: input.ID, Author: input.Author, Role: strings.TrimSpace(input.Role), Text: input.Text, Rating: input.Rating, Position: input.Position, IsPublished: input.IsPublished})
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	writeJSON(w, map[bool]int{true: http.StatusCreated, false: http.StatusOK}[input.ID == 0], map[string]int64{"id": id})
+}
+func (h handler) adminGallery(w http.ResponseWriter, r *http.Request) {
+	items, err := h.store.AdminGallery(r.Context())
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	out := make([]adminGalleryDTO, 0, len(items))
+	for _, item := range items {
+		url, urlErr := h.media.URL(r.Context(), item.Media.ObjectKey)
+		if urlErr != nil {
+			h.failure(w, urlErr)
+			return
+		}
+		out = append(out, adminGalleryDTO{ID: item.ID, MediaID: item.MediaID, Title: item.Title, Position: item.Position, Media: mediaDTO{ID: item.MediaID, URL: url, MIME: item.Media.MIME, SizeBytes: item.Media.SizeBytes, Alt: item.Media.Alt}})
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+func (h handler) addAdminGallery(w http.ResponseWriter, r *http.Request) {
+	var input addGalleryRequest
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil || input.MediaID < 1 {
+		h.validationFailure(w, "mediaId", "Сначала загрузите фотографию")
+		return
+	}
+	id, err := h.store.AddGalleryItem(r.Context(), input.MediaID, strings.TrimSpace(input.Title))
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, map[string]int64{"id": id})
+}
+func (h handler) deleteAdminGallery(w http.ResponseWriter, r *http.Request) {
+	storage, ok := h.media.(mediaStorage)
+	if !ok {
+		h.failure(w, errors.New("media storage does not support deletion"))
+		return
+	}
+	key, err := h.store.DeleteGalleryItem(r.Context(), pathID(r))
+	if err != nil {
+		h.failure(w, err)
+		return
+	}
+	if err = storage.Delete(r.Context(), key); err != nil {
+		h.failure(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h handler) setPublication(w http.ResponseWriter, r *http.Request) {
 	var input publicationRequest
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -506,7 +1270,28 @@ func (h handler) updateAdminItem(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 func (h handler) deleteAdminItem(w http.ResponseWriter, r *http.Request) {
-	if err := h.store.DeleteAdminItem(r.Context(), chi.URLParam(r, "resource"), pathID(r)); err != nil {
+	resource := chi.URLParam(r, "resource")
+	if resource == "staff" || resource == "documents" {
+		storage, ok := h.media.(mediaStorage)
+		if !ok {
+			h.failure(w, errors.New("media storage does not support deletion"))
+			return
+		}
+		key, err := h.store.DeleteAdminAsset(r.Context(), resource, pathID(r))
+		if err != nil {
+			h.failure(w, err)
+			return
+		}
+		if key != "" {
+			if err = storage.Delete(r.Context(), key); err != nil {
+				h.failure(w, err)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	if err := h.store.DeleteAdminItem(r.Context(), resource, pathID(r)); err != nil {
 		h.failure(w, err)
 		return
 	}

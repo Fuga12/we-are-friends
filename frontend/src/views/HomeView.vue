@@ -11,19 +11,18 @@ import CtaSection from '@/components/sections/CtaSection.vue'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { site } from '@/data/site'
 import { reviews } from '@/data/reviews'
+import { specialOffers } from '@/data/services'
 import { useAsync } from '@/composables/useAsync'
-import { getClasses, getHome, getServices, getNews } from '@/api'
+import { getClasses, getHome, getNews } from '@/api'
 
 // Данные-витрину тянем с бэкенда. Пока грузятся — списки пустые,
 // секции просто дорисуются, как только придут данные.
 const { data: classesData } = useAsync(getClasses)
 const { data: homeData } = useAsync(getHome)
-const { data: servicesData } = useAsync(getServices)
 const { data: newsData } = useAsync(getNews)
 
 // На главной показываем только часть данных — «витрину»
 const featuredClasses = computed(() => (classesData.value ?? []).slice(0, 3))
-const specialOffers = computed(() => servicesData.value ?? [])
 const latestNews = computed(() => (newsData.value ?? []).slice(0, 3))
 const featuredReviews = reviews.slice(0, 3)
 

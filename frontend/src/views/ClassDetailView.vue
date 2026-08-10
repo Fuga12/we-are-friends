@@ -1,19 +1,21 @@
 <script setup lang="ts">
-import { watchEffect } from 'vue'
+import { computed, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAsync } from '@/composables/useAsync'
-import { getClass } from '@/api'
+import { getClass, getSummerShift } from '@/api'
 import { useAccent } from '@/composables/useAccent'
 import PhotoFrame from '@/components/ui/PhotoFrame.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import { site } from '@/data/site'
 
 const route = useRoute()
+const isSummer = computed(() => route.name === 'summer-shift-detail')
+const listPath = computed(() => isSummer.value ? '/special/summer' : '/classes')
 
 // Грузим занятие по :id из адреса. Второй аргумент перезагружает данные,
 // если перейти на другое занятие без ухода со страницы.
 const { data: item, loading } = useAsync(
-  () => getClass(route.params.id as string),
+  () => isSummer.value ? getSummerShift(route.params.id as string) : getClass(route.params.id as string),
   () => route.params.id,
 )
 
@@ -22,7 +24,7 @@ const accentStyle = useAccent(() => item.value?.color)
 
 // Заголовок вкладки браузера
 watchEffect(() => {
-  document.title = item.value ? `${item.value.title} · Мы друзья` : 'Занятие не найдено'
+  document.title = item.value ? `${item.value.title} · Мы друзья` : isSummer.value ? 'Смена не найдена' : 'Занятие не найдено'
 })
 </script>
 
@@ -36,14 +38,14 @@ watchEffect(() => {
       <p class="lead">Загрузка…</p>
     </section>
     <section v-else-if="!item" class="section container text-center">
-      <p class="lead">Такое занятие не найдено.</p>
-      <BaseButton to="/classes" variant="primary">Ко всем занятиям</BaseButton>
+      <p class="lead">{{ isSummer ? 'Такая смена не найдена.' : 'Такое занятие не найдено.' }}</p>
+      <BaseButton :to="listPath" variant="primary">{{ isSummer ? 'Ко всем сменам' : 'Ко всем занятиям' }}</BaseButton>
     </section>
     <article v-else :style="accentStyle">
       <!-- Шапка -->
       <header class="detail-hero">
         <div class="container">
-          <RouterLink to="/classes" class="back-link">← Все занятия</RouterLink>
+          <RouterLink :to="listPath" class="back-link">← {{ isSummer ? 'Все смены' : 'Все занятия' }}</RouterLink>
           <div class="detail-hero__top">
             <span class="detail-hero__emoji" aria-hidden="true">{{ item.emoji }}</span>
             <span class="detail-hero__age">{{ item.ageRange }}</span>
@@ -61,13 +63,13 @@ watchEffect(() => {
 
           <!-- Описание -->
           <div class="stack">
-            <h2>Об этом занятии</h2>
+            <h2>{{ isSummer ? 'Об этой смене' : 'Об этом занятии' }}</h2>
             <p v-for="(para, i) in item.fullDescription" :key="i">{{ para }}</p>
           </div>
 
           <!-- Мини-галерея с занятий: список фото приходит с бэкенда -->
           <div v-if="item.photos?.length" class="stack">
-            <h2>Фото с занятий</h2>
+            <h2>{{ isSummer ? 'Фото со смены' : 'Фото с занятий' }}</h2>
             <div class="photo-grid">
               <PhotoFrame
                 v-for="(src, i) in item.photos"
@@ -92,7 +94,7 @@ watchEffect(() => {
                 <dd>{{ item.ageRange }}</dd>
               </div>
               <div>
-                <dt>Расписание</dt>
+                <dt>{{ isSummer ? 'Даты' : 'Расписание' }}</dt>
                 <dd>{{ item.schedule }}</dd>
               </div>
               <div>

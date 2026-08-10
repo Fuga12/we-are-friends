@@ -24,7 +24,7 @@ func Up(ctx context.Context, pool *pgxpool.Pool) error {
 	if _, err := pool.Exec(ctx, `create table if not exists app_schema_versions (version integer primary key)`); err != nil {
 		return err
 	}
-	for _, item := range []migration{{1, migrations.Initial}, {2, migrations.AdminAuthAndPublication}} {
+	for _, item := range []migration{{1, migrations.Initial}, {2, migrations.AdminAuthAndPublication}, {3, migrations.SummerShifts}, {4, migrations.SeedReviews}} {
 		var applied bool
 		if err := pool.QueryRow(ctx, `select exists(select 1 from app_schema_versions where version=$1)`, item.version).Scan(&applied); err != nil {
 			return err

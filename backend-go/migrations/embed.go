@@ -10,3 +10,9 @@ var Initial string
 
 //go:embed 0002_admin_auth_and_publication.sql
 var AdminAuthAndPublication string
+
+//go:embed 0003_summer_shifts.sql
+var SummerShifts string
+
+//go:embed 0004_seed_reviews.sql
+var SeedReviews string
