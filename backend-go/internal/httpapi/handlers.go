@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"crypto/subtle"
@@ -14,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	mediafiles "github.com/Fuga12/we-are-friends/backend-go/internal/media"
 	"github.com/Fuga12/we-are-friends/backend-go/internal/store"
 	"github.com/go-chi/chi/v5"
 )
@@ -572,12 +574,25 @@ func (h handler) uploadMedia(w http.ResponseWriter, r *http.Request) {
 		h.validationFailure(w, "file", "У файла должно быть расширение")
 		return
 	}
+	uploadBody := io.Reader(file)
+	uploadSize := header.Size
+	if strings.HasPrefix(mime, "image/") {
+		optimized, err := mediafiles.OptimizeImage(file)
+		if err != nil {
+			h.validationFailure(w, "file", "Не удалось обработать изображение. Загрузите JPEG, PNG, GIF или WebP")
+			return
+		}
+		mime = "image/jpeg"
+		ext = ".jpg"
+		uploadSize = int64(len(optimized))
+		uploadBody = bytes.NewReader(optimized)
+	}
 	key := "uploads/" + time.Now().UTC().Format("2006/01/02") + "/" + uuid.NewString() + ext
-	if err := storage.Upload(r.Context(), key, mime, header.Size, file); err != nil {
+	if err := storage.Upload(r.Context(), key, mime, uploadSize, uploadBody); err != nil {
 		h.failure(w, err)
 		return
 	}
-	item, err := h.store.CreateMedia(r.Context(), key, mime, header.Size, strings.TrimSpace(r.FormValue("alt")))
+	item, err := h.store.CreateMedia(r.Context(), key, mime, uploadSize, strings.TrimSpace(r.FormValue("alt")))
 	if err != nil {
 		_ = storage.Delete(r.Context(), key)
 		h.failure(w, err)
