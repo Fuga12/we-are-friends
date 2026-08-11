@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+
+Host: https://ddc-ptz.ru
+Sitemap: https://ddc-ptz.ru/sitemap.xml
