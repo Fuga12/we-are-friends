@@ -14,18 +14,18 @@ const accentStyle = useAccent(toRef(() => props.item.color))
          реальное фото, передай в PhotoFrame :src="item.photo". -->
     <div class="class-card__media">
       <PhotoFrame ratio="16 / 10" :src="item.photo" :alt="item.title" :emoji="item.emoji" />
-      <span class="class-card__age">{{ item.ageRange }}</span>
+      <span v-if="item.ageRange" class="class-card__age">{{ item.ageRange }}</span>
     </div>
 
     <div class="class-card__body">
       <h3 class="class-card__title">{{ item.title }}</h3>
-      <p class="class-card__desc">{{ item.description }}</p>
-      <dl class="class-card__meta">
-        <div>
+      <p v-if="item.description" class="class-card__desc">{{ item.description }}</p>
+      <dl v-if="item.schedule || item.price" class="class-card__meta">
+        <div v-if="item.schedule">
           <dt>Расписание</dt>
           <dd>{{ item.schedule }}</dd>
         </div>
-        <div>
+        <div v-if="item.price">
           <dt>Стоимость</dt>
           <dd>{{ item.price }}</dd>
         </div>

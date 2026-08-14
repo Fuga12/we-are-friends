@@ -1060,21 +1060,24 @@ func (h handler) saveAdminClass(w http.ResponseWriter, r *http.Request) {
 		h.validationFailure(w, "title", "Укажите название занятия")
 		return
 	}
-	if strings.TrimSpace(input.AgeRange) == "" {
-		h.validationFailure(w, "ageRange", "Укажите возраст")
-		return
-	}
-	if strings.TrimSpace(input.Description) == "" {
-		h.validationFailure(w, "description", "Добавьте краткое описание")
-		return
-	}
 	if input.Position < 0 {
 		h.validationFailure(w, "position", "Порядок не может быть отрицательным")
 		return
 	}
-	if len(input.Color) != 7 || input.Color[0] != '#' {
+	if strings.TrimSpace(input.Color) == "" {
+		input.Color = "#e46129"
+	} else if len(input.Color) != 7 || input.Color[0] != '#' {
 		h.validationFailure(w, "color", "Укажите цвет в формате #1a6757")
 		return
+	}
+	if strings.TrimSpace(input.Emoji) == "" {
+		input.Emoji = "🎨"
+	}
+	if input.FullDescription == nil {
+		input.FullDescription = []string{}
+	}
+	if input.Highlights == nil {
+		input.Highlights = []string{}
 	}
 	item := store.AdminClass{ID: input.ID, Title: input.Title, AgeRange: strings.TrimSpace(input.AgeRange), Description: strings.TrimSpace(input.Description),
 		Schedule: strings.TrimSpace(input.Schedule), Price: strings.TrimSpace(input.Price), Emoji: strings.TrimSpace(input.Emoji), Color: input.Color,
@@ -1102,21 +1105,24 @@ func (h handler) saveAdminSummerShift(w http.ResponseWriter, r *http.Request) {
 		h.validationFailure(w, "title", "Укажите название смены")
 		return
 	}
-	if strings.TrimSpace(input.AgeRange) == "" {
-		h.validationFailure(w, "ageRange", "Укажите возраст")
-		return
-	}
-	if strings.TrimSpace(input.Description) == "" {
-		h.validationFailure(w, "description", "Добавьте краткое описание")
-		return
-	}
 	if input.Position < 0 {
 		h.validationFailure(w, "position", "Порядок не может быть отрицательным")
 		return
 	}
-	if len(input.Color) != 7 || input.Color[0] != '#' {
+	if strings.TrimSpace(input.Color) == "" {
+		input.Color = "#e46129"
+	} else if len(input.Color) != 7 || input.Color[0] != '#' {
 		h.validationFailure(w, "color", "Укажите цвет в формате #1a6757")
 		return
+	}
+	if strings.TrimSpace(input.Emoji) == "" {
+		input.Emoji = "☀️"
+	}
+	if input.FullDescription == nil {
+		input.FullDescription = []string{}
+	}
+	if input.Highlights == nil {
+		input.Highlights = []string{}
 	}
 	item := store.AdminSummerShift{ID: input.ID, Title: input.Title, AgeRange: strings.TrimSpace(input.AgeRange), Description: strings.TrimSpace(input.Description), Schedule: strings.TrimSpace(input.Schedule), Price: strings.TrimSpace(input.Price), Emoji: strings.TrimSpace(input.Emoji), Color: input.Color, CoverMediaID: input.CoverMediaID, PhotoMediaIDs: input.PhotoMediaIDs, FullDescription: input.FullDescription, Highlights: input.Highlights, Position: input.Position, IsPublished: input.IsPublished}
 	id, err := h.store.SaveAdminSummerShift(r.Context(), item)

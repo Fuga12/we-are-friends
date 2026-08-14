@@ -47,11 +47,11 @@ watchEffect(() => {
         <div class="container">
           <RouterLink :to="listPath" class="back-link">← {{ isSummer ? 'Все смены' : 'Все занятия' }}</RouterLink>
           <div class="detail-hero__top">
-            <span class="detail-hero__emoji" aria-hidden="true">{{ item.emoji }}</span>
-            <span class="detail-hero__age">{{ item.ageRange }}</span>
+            <span v-if="item.emoji" class="detail-hero__emoji" aria-hidden="true">{{ item.emoji }}</span>
+            <span v-if="item.ageRange" class="detail-hero__age">{{ item.ageRange }}</span>
           </div>
           <h1 class="detail-hero__title">{{ item.title }}</h1>
-          <p class="detail-hero__lead">{{ item.description }}</p>
+          <p v-if="item.description" class="detail-hero__lead">{{ item.description }}</p>
         </div>
       </header>
 
@@ -62,7 +62,7 @@ watchEffect(() => {
           <PhotoFrame ratio="16 / 9" :src="item.photo" :alt="item.title" :emoji="item.emoji" />
 
           <!-- Описание -->
-          <div class="stack">
+          <div v-if="item.fullDescription?.length" class="stack">
             <h2>{{ isSummer ? 'Об этой смене' : 'Об этом занятии' }}</h2>
             <p v-for="(para, i) in item.fullDescription" :key="i">{{ para }}</p>
           </div>
@@ -85,19 +85,19 @@ watchEffect(() => {
         <!-- Правая колонка: липкая карточка записи -->
         <aside class="detail-aside">
           <div class="info-card">
-            <ul v-if="item.highlights" class="info-card__list">
+            <ul v-if="item.highlights?.length" class="info-card__list">
               <li v-for="h in item.highlights" :key="h">{{ h }}</li>
             </ul>
-            <dl class="info-card__meta">
-              <div>
+            <dl v-if="item.ageRange || item.schedule || item.price" class="info-card__meta">
+              <div v-if="item.ageRange">
                 <dt>Возраст</dt>
                 <dd>{{ item.ageRange }}</dd>
               </div>
-              <div>
+              <div v-if="item.schedule">
                 <dt>{{ isSummer ? 'Даты' : 'Расписание' }}</dt>
                 <dd>{{ item.schedule }}</dd>
               </div>
-              <div>
+              <div v-if="item.price">
                 <dt>Стоимость</dt>
                 <dd>{{ item.price }}</dd>
               </div>

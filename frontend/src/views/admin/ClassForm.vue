@@ -91,7 +91,7 @@ async function cancel() {
 }
 async function save() {
   error.value = ''
-  if (!form.value.title.trim() || !form.value.ageRange.trim() || !form.value.description.trim()) { error.value = 'Заполните название, возраст и краткое описание'; return }
+  if (!form.value.title.trim()) { error.value = `Не хватает обязательного поля: ${props.kind === 'summer' ? 'название смены' : 'название занятия'}`; return }
   loading.value = true
   try {
     form.value.fullDescription = lines(paragraphs.value)
@@ -112,8 +112,8 @@ onMounted(load)
   <section class="class-form" :aria-busy="loading">
     <div class="form-heading"><div><p class="eyebrow">{{ id ? 'Редактирование' : kind === 'summer' ? 'Новая смена' : 'Новое занятие' }}</p><h2>{{ id ? form.title || (kind === 'summer' ? 'Смена' : 'Занятие') : kind === 'summer' ? 'Создать смену' : 'Создать занятие' }}</h2></div><Button label="Закрыть" text severity="secondary" @click="cancel" /></div>
     <p v-if="error" class="form-error">{{ error }}</p>
-    <div class="fields two"><label>Название *<InputText v-model="form.title" placeholder="Например, Столярка" /></label><label>Возраст *<InputText v-model="form.ageRange" placeholder="8–13 лет" /></label></div>
-    <label>Краткое описание *<Textarea v-model="form.description" rows="4" auto-resize placeholder="Текст для карточки занятия" /></label>
+    <div class="fields two"><label>Название *<InputText v-model="form.title" placeholder="Например, Столярка" /><small>Единственное обязательное поле.</small></label><label>Возраст<InputText v-model="form.ageRange" placeholder="8–13 лет" /></label></div>
+    <label>Краткое описание<Textarea v-model="form.description" rows="4" auto-resize placeholder="Текст для карточки занятия" /></label>
     <div class="fields two"><label>{{ kind === 'summer' ? 'Даты' : 'Расписание' }}<InputText v-model="form.schedule" :placeholder="kind === 'summer' ? '13–24 июля' : 'Чт 17:00, Сб 12:00'" /></label><label>Стоимость<InputText v-model="form.price" placeholder="по запросу" /></label></div>
     <div class="fields compact"><label>Значок<details ref="emojiPicker" class="emoji-picker"><summary>{{ form.emoji || '＋' }}</summary><div class="emoji-grid"><button v-for="emoji in emojiOptions" :key="emoji" type="button" :class="{ selected: form.emoji === emoji }" @click="chooseEmoji(emoji)">{{ emoji }}</button></div></details></label><label>Цвет карточки<div class="color-field"><input v-model="form.color" type="color" /><InputText v-model="form.color" /></div></label></div>
     <label>Подробное описание <small>Один абзац — один блок, разделяйте пустой строкой</small><Textarea v-model="paragraphs" rows="8" auto-resize /></label>
