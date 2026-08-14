@@ -48,7 +48,7 @@ async function request<T>(path: string, token: string, init: RequestInit = {}): 
   const response = await fetch(`/api/admin${path}`, { ...init, headers: { ...headers(token), ...init.headers } })
   if (!response.ok) {
     if (response.status === 401) throw new Error('Сессия истекла — войдите снова')
-    if (response.status === 413) throw new Error('Файл слишком большой — максимальный размер 20 МБ')
+    if (response.status === 413) throw new Error('Файл слишком большой — максимальный размер 50 МБ')
     const payload = await response.json().catch(() => null) as { error?: { message?: string } } | null
     throw new Error(payload?.error?.message || 'Не удалось выполнить запрос')
   }

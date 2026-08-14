@@ -210,7 +210,8 @@ onMounted(() => { if (token.value) { void loadItems(); void getAdminOverview(tok
 .admin-main { width:min(1100px, calc(100% - 2.5rem)); margin:0 auto; padding:3.5rem 0 5rem; }
 .login-card,.content-card { background:#fff; border:1px solid #e6e2d9; border-radius:20px; padding:clamp(1.5rem,4vw,3rem); box-shadow:0 14px 35px #173d3510; }
 .login-card { width:min(460px,100%); margin:7vh auto; display:grid; gap:1rem; }.login-card h1,.admin-intro h1 { margin:0; }.login-card p,.admin-intro p { color:#647067; line-height:1.5; }
-label { display:grid; gap:.45rem; font-weight:700; }.eyebrow { color:#e46129; font-weight:800; text-transform:uppercase; letter-spacing:.08em; font-size:.75rem; margin:0 0 .35rem; }.form-error { color:#b42318; }
+label { display:grid; gap:.45rem; font-weight:700; }.eyebrow { color:#e46129; font-weight:800; text-transform:uppercase; letter-spacing:.08em; font-size:.75rem; margin:0 0 .35rem; }
+:deep(.form-error) { display:block; margin:.75rem 0; padding:.85rem 1rem; border:2px solid #b42318; border-radius:10px; background:#fff1f0; color:#b42318; font-size:1.1rem; font-weight:800; line-height:1.4; }
 .admin-intro { display:flex; justify-content:space-between; align-items:end; gap:2rem; margin-bottom:1.8rem; }.admin-intro > p { max-width:430px; margin:0; }
 .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:.75rem; margin-bottom:1.8rem; }.stats article { background:#e9f3ef; border-radius:14px; padding:1rem; display:grid; gap:.2rem; }.stats strong{font-size:1.6rem}.stats span{font-size:.8rem;color:#527168}
 .content-toolbar { display:flex; justify-content:space-between; gap:1rem; margin-bottom:1.25rem; }.content-card small { display:block; margin-top:.2rem; } :deep(.p-datatable td small) { display:block; color:#6f766e; margin-top:.25rem; }

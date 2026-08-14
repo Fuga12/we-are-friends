@@ -586,7 +586,7 @@ func (h handler) requireAuth(next http.Handler) http.Handler {
 	})
 }
 
-const maxUploadSize = 20 << 20
+const maxUploadSize = 50 << 20
 
 func (h handler) mediaItems(w http.ResponseWriter, r *http.Request) {
 	page, perPage, err := pageParams(r)
@@ -617,9 +617,10 @@ func (h handler) uploadMedia(w http.ResponseWriter, r *http.Request) {
 		h.failure(w, errors.New("media storage does not support uploads"))
 		return
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize+1024)
+	// Leave room for multipart headers and the textual alt field in addition to the file itself.
+	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize+(1<<20))
 	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
-		h.validationFailure(w, "file", "Размер файла не должен превышать 20 МБ")
+		h.validationFailure(w, "file", "Размер файла не должен превышать 50 МБ")
 		return
 	}
 	file, header, err := r.FormFile("file")
