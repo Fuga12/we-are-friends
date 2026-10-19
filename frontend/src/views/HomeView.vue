@@ -26,7 +26,8 @@ const latestNews = computed(() => (newsData.value ?? []).slice(0, 3))
 const featuredReviews = reviews.slice(0, 3)
 
 const heroPhotoIndex = ref(0)
-const heroPhotos = Array.from({ length: 20 }, (_, index) => `/home_photos/${index + 1}.jpg`)
+// Public portfolio contains an illustration instead of photographs.
+const heroPhotos = ['/demo-placeholder.svg']
 const readyHeroPhotos = ref<string[]>([])
 let heroPhotoTimer: ReturnType<typeof setInterval> | undefined
 let heroPhotoPreloadRun = 0
@@ -117,7 +118,7 @@ const stats = [
               v-for="(src, index) in readyHeroPhotos"
               :key="src"
               :src="src"
-              alt="Дети в центре «Мы Друзья»"
+              alt="Демонстрационная иллюстрация центра «Мы Друзья»"
               :class="{ 'hero__photo-image--active': index === heroPhotoIndex }"
             />
           </template>

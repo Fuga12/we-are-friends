@@ -1,0 +1,29 @@
+# Local configuration (only templates belong in Git)
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Runtime databases, uploads and source content
+/data/
+/curent_data/
+/tmp/
+/photo/
+/frontend/public/home_photos/
+/frontend/public/photos/
+/backend/media/photos/
+/backend-stub/media/photos/
+*.sql.gz
+*.dump
+*.backup
+
+# Generated files and local tools
+.DS_Store
+.claude/
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.py[cod]
+coverage.out
+/backend-go/bin/

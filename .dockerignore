@@ -9,3 +9,7 @@ backend-stub/.venv
 backend-go/.env
 backend-go/bin
 **/__pycache__
+
+.env
+.env.*
+data

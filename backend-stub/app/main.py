@@ -46,6 +46,9 @@ def media_url(path: str) -> str:
     (presigned URL с истечением срока) — контракт от этого не меняется:
     в JSON так же приходит готовая абсолютная ссылка, которую фронт вставляет.
     """
+    # Original photographs are excluded from the public portfolio.
+    if path.startswith("/media/photos/"):
+        path = "/media/placeholder.svg"
     return f"{MEDIA_BASE_URL}{path}"
 
 
